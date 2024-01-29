@@ -1,26 +1,14 @@
 ---
-title: Mac配置Jenkins五：使用Telegram发送打包结果
+title: Telegram机器人一
 author: 独孤流
-date: 2023-05-24 01:04:00 +0800
-categories: [Jenkins]
-tags: [Jenkins]     # TAG names should always be lowercase
+date: 2024-01-29 01:04:00 +0800
+categories: [Telegram]
+tags: [Telegram, Bot]     # TAG names should always be lowercase
 ---
 
-https://formulae.brew.sh/formula/qrencode
 
-1、安装生成二维码图片的库
-```
-brew install qrencode
-```
-在shell脚本里使用生成图片
-```
-qrImgPath="xxx/xxx.png"
-text="hello world"
-# 将msg生成二维码图片，保存在qrImgPath这个路径
-/opt/homebrew/bin/qrencode -o $qrImgPath $text
-```
-2、使用Telegram机器人发送消息
-2.1 生成并创建Telegram机器人
+1、使用Telegram机器人发送消息
+1.1 生成并创建Telegram机器人
 参考：Telegram 机器人的申请和设置图文教程
 
 首先在Telegram 里搜索 `@botfather`
@@ -40,7 +28,7 @@ https://api.telegram.org/bot6072345345:AAdfgsdfgsdfg345Bl97_-io/getUpdates
 ```
 Telegram机器人获取个人及群组ID
 
-2.2 使用机器人发送通知消息
+1.2 使用机器人发送通知消息
 api文档：https://core.telegram.org/bots/api
 ```
 # 发送图片
