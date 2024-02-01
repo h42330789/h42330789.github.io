@@ -2,7 +2,7 @@
 title: mac安装开发、发布和推送证书后提示证书不受信任
 author: 独孤流
 date: 2024-01-27 01:04:00 +0800
-categories: [other]
+categories: [other, 其他]
 tags: [apns]     # TAG names should always be lowercase
 ---
 

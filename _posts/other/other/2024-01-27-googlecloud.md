@@ -2,7 +2,7 @@
 title: 安装GoogleCloud
 author: 独孤流
 date: 2024-01-27 01:04:00 +0800
-categories: [other]
+categories: [other, 其他]
 tags: [googleCloud]     # TAG names should always be lowercase
 ---
 
