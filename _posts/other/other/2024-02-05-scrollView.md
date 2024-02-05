@@ -30,3 +30,7 @@ Warning: Error creating LLDB target at path '/Users/xxx/Library/Developer/Xcode/
 `Build Settings` -> `Architectures` -> `Excluded Architectures` -> `Debug`，删掉`Arm64`的配置
 
 [使用最新的LookIn进行断点调试查看UI](https://www.jianshu.com/p/3ee8960c1ffb)
+
+参考：\
+[M1适配,New Build System,模拟器卡顿,Rosetta](https://www.jianshu.com/p/9df49126ec27)\
+[Using an empty LLDB target which can cause slow memory...](https://stackoverflow.com/questions/64114768/using-an-empty-lldb-target-which-can-cause-slow-memory-reads-from-remote-devices)
