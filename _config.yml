@@ -199,3 +199,13 @@ jekyll-archives:
   permalinks:
     tag: /tags/:name/
     category: /categories/:name/
+# ---------- #
+# 配置各种评论 #
+# support provider: disqus, gitment, gitalk
+# 参考：https://blog.csdn.net/q764424567/article/details/105711508
+comments_provider: gitalk
+gitalk:
+  owner: h42330789
+  repo: blog-comments
+  clientID: sdfsdfsfd
+  clientSecret: xxdfdsfsdf
