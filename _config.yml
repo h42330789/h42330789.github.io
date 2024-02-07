@@ -207,5 +207,5 @@ comments_provider: gitalk
 gitalk:
   owner: h42330789
   repo: blog-comments
-  clientID: sdfsdfsfd
-  clientSecret: xxdfdsfsdf
+  clientID: 9f9aacf9e7c620df9b58
+  clientSecret: 691047e7e83583b8c50fd7b8bc90358a1ca72c32
