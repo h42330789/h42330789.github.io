@@ -104,6 +104,11 @@ comments:
     input_position: # optional, default to 'bottom'
     lang: # optional, default to the value of `site.lang`
     reactions_enabled: # optional, default to the value of `1`
+  gitalk:
+    owner: h42330789
+    repo: blog-comments
+    clientID: 9f9aacf9e7c620df9b58
+    clientSecret: 691047e7e83583b8c50fd7b8bc90358a1ca72c32
 
 # Self-hosted static assets, optional › https://github.com/cotes2020/chirpy-static-assets
 assets:
