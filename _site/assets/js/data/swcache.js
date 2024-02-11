@@ -17,6 +17,10 @@ const resource = [
   
     '/archives/',
   
+    '/links/',
+  
+    '/%E7%AE%80%E4%B9%A6/',
+  
     '/about/',
   
 
