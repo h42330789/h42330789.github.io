@@ -99,8 +99,8 @@ comments:
   giscus:
     repo: h42330789/h42330789.github.io
     repo_id: R_kgDOIyi7bQ
-    category: 
-    category_id:
+    category: General
+    category_id: DIC_kwDOIyi7bc4CdILQ
     mapping: # optional, default to 'pathname'
     input_position: # optional, default to 'bottom'
     lang: # optional, default to the value of `site.lang`
