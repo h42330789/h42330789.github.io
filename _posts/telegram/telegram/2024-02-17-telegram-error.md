@@ -2,7 +2,7 @@
 title: Telegram研究四：错误整理
 author: 独孤流
 date: 2024-02-17 01:04:00 +0800
-categories: [Telegram]
+categories: [Telegram, Telegram及Demo]
 tags: [Telegram]     # TAG names should always be lowercase
 ---
 

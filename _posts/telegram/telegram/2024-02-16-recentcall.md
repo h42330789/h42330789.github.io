@@ -1,8 +1,8 @@
 ---
-title: Telegram研：ListView使用之最近通话
+title: Telegram研究：ListView使用之最近通话
 author: 独孤流
 date: 2024-02-16 17:04:00 +0800
-categories: [Telegram]
+categories: [Telegram, Telegram及Demo]
 tags: [Telegram, im]     # TAG names should always be lowercase
 ---
 

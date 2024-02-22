@@ -1,8 +1,8 @@
 ---
-title: Telegram研：ItemListController使用之Chat Folders
+title: Telegram研究：ItemListController使用之Chat Folders
 author: 独孤流
 date: 2024-02-16 18:04:00 +0800
-categories: [Telegram]
+categories: [Telegram, Telegram及Demo]
 tags: [Telegram, im]     # TAG names should always be lowercase
 ---
 
