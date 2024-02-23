@@ -9,6 +9,7 @@ tags: [Telegram, SwiftSignalKit]     # TAG names should always be lowercase
 参考：
 - [https://hubo.dev/2020-05-11-source-code-walkthrough-of-telegram-ios-part-2](https://hubo.dev/2020-05-11-source-code-walkthrough-of-telegram-ios-part-2/)
 - [Telegram-iOS 源码分析：第二部分（SSignalKit）](https://www.jianshu.com/p/887de98ae9f2)
+- [RxSwift核心](https://beeth0ven.github.io/RxSwift-Chinese-Documentation/content/rxswift_core.html)
 
 与Rxswif类似，主要包含的内容：`Signal`,`Subscriber`，`Disposable`
 

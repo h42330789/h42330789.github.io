@@ -6,4 +6,28 @@ categories: [Telegram, SwiftSignalKit]
 tags: [Telegram, SwiftSignalKit]     # TAG names should always be lowercase
 ---
 
-test
+- [Operator - 操作符](https://beeth0ven.github.io/RxSwift-Chinese-Documentation/content/rxswift_core/operator.html)
+- [如何选择操作符？](https://beeth0ven.github.io/RxSwift-Chinese-Documentation/content/decision_tree.html)
+  
+### 操作符（Operators）
+```
+precedencegroup PipeRight {
+    associativity: left
+    higherThan: DefaultPrecedence
+}
+
+infix operator |> : PipeRight
+
+public func |> <T, U>(value: T, function: ((T) -> U)) -> U {
+    return function(value)
+}
+```
+
+### ValuePipe
+### Timer
+
+`Catch`: 
+`restart`:
+`recurse`:
+`retry`:
+`restartIfError`:
