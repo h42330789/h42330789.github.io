@@ -6,17 +6,32 @@ categories: [Telegram, Telegram及Demo]
 tags: [Telegram, im]     # TAG names should always be lowercase
 ---
 
-- https://github.com/TelegramMessenger/Telegram-iOS
-- https://github.com/h42330789/StudyIM/tree/feature/ListView/StudyAsynDisplay 
+Telegram: \
+仓库：[https://github.com/TelegramMessenger/Telegram-iOS](https://github.com/TelegramMessenger/Telegram-iOS)\
+tag: `release-10.1`\
+主要基类及协议：`ListView`、`ListViewInsertItem`、`ListViewItem`、`ListViewItemNode`\
+主要学习源码文件：`CallListViewTransition.swift`、`CallListControllerNode.swift`、`CallListCallItem.swift`\
+主要业务类：
+- `CallListNodeViewTransitionInsertEntry`: 原始的数据
+- `CallListCallItem` + `CallListGroupCallItem` + `CallListHoleItem`: 继承自`ListViewItem`，设置对应的展示Node，处理点击回调
+- `CallListCallItemNode` + `CallListGroupCallItemNode` + `CallListHoleItemNode`: 继承自`ItemListRevealOptionsItemNode->ListViewItemNode`，设置Node的展示样式及做布局大小计算
+- `ItemListRevealOptionsItemNode`: 这个继承自`ListViewItemNode`, 这个类定义了可以侧滑删除相关的交互
 
+本例Demo：
+仓库： [https://github.com/h42330789/StudyIM/tree/feature/ListView/StudyAsynDisplay](https://github.com/h42330789/StudyIM/tree/feature/ListView/StudyAsynDisplay)\
+分支：`origin/feature/ItemListController`\
+主要Demo文件：`NormalDisplayListViewVC.swift`
 > ### 前言
 > `Telegram`包含了很多库，其中与UI有关的最核心的是`AsyncDisplayKit`、`Display`，其中UI库里使用最广的又是`ListView`,本文集合页面实例进行研究
 
 ![image](/assets/img/telegram/telegram_listview_01.png)
 ![image](/assets/img/telegram/telegram_listview_02.png)
 
+
 调用过程：\
 PeerInfoScreen.swift → PeerInfoScreenNode → openSettings → .recentCalls → CallListController -> CallListControllerNode -> listNode: ListView
+
+
 
 数据组合过程：\
 CallListController -> loadDisplayNode -> CallListControllerNode.init -> callListNodeViewTransition ->  callListNodeEntriesForView -> `CallListNodeEntry` -> -> preparedCallListNodeViewTransition -> CallListNodeViewTransitionInsertEntry -> `CallListCallItem` -> `CallListCallItemNode` -> ListViewInsertItem
