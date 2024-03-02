@@ -7,7 +7,21 @@ tags: [Telegram, im]     # TAG names should always be lowercase
 ---
 
  
-  - https://github.com/TelegramMessenger/Telegram-iOS  
+Telegram: \
+仓库：[https://github.com/TelegramMessenger/Telegram-iOS](https://github.com/TelegramMessenger/Telegram-iOS)\
+tag: `release-10.1`\
+主要基类及协议：`ItemListNodeEntry`、`ListViewItem`+`ItemListItem`、`ItemListRevealOptionsItemNode`+`ListViewItemNode`\
+主要学习源码文件：`ChatListFilterPresetListController.swift`、`ChatListFilterPresetController.swift`\
+主要业务类：
+- `ChatListFilterPresetListEntry`、`ChatListFilterPresetEntry`: 原始的数据
+- `ChatListFilterSettingsHeaderItem` + `ItemListSectionHeaderItem` + `ChatListFilterPresetListSuggestedItem`: 继承自`ListViewItem, ItemListItem`，设置对应的展示Node，处理点击回调
+- `ChatListFilterSettingsHeaderItemNode` + `CallListGroupCallItemNode` + `CallListHoleItemNode`: 继承自`ItemListRevealOptionsItemNode->ListViewItemNode`，设置Node的展示样式及做布局大小计算
+- `ItemListRevealOptionsItemNode`: 这个继承自`ListViewItemNode`, 这个类定义了可以侧滑删除相关的交互
+
+本例Demo：
+仓库： [https://github.com/h42330789/StudyIM/tree/feature/ListView/StudyAsynDisplay](https://github.com/h42330789/StudyIM/tree/feature/ListView/StudyAsynDisplay)\
+分支：`origin/feature/ItemListController`\
+主要Demo文件：`MyChatFolderVC.swift`、`EditChatFolderVC.swift`
 
 
 ![image](/assets/img/telegram/telegram_chatFolders_01.png)
