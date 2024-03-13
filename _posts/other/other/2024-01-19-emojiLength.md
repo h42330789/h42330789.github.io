@@ -116,8 +116,7 @@ func findAllRange(ocText: NSString, startIndex: Int, findStr1: String) -> NSRang
      let resultRange = NSRange(location: startIndex+findRange.location, length: findRange.length)
      return resultRange
  }
-
-使用分类的方式实现
+// 使用分类的方式实现
 extension String {
     func findAllRange(findStr: String) -> [NSRange] {
          var ocText: NSString = (self as NSString)
@@ -125,13 +124,13 @@ extension String {
         var rangeList: [NSRange] = []
         var startIndex: Int = 0
         // 查找第一遍
-        var findRange = self.findStrRange(ocText: ocText, startIndex: startIndex, findStr1: findStr1)
+        var findRange = self.findStrRange(ocText: ocText, startIndex: startIndex, findStr: findStr)
         
         while findRange.length > 0 {
             // 如果找到了，继续遍历查找
             rangeList.append(findRange)
             startIndex = findRange.location + findRange.length
-            findRange = self.findStrRange(ocText: ocText, startIndex: startIndex, findStr1: findStr1)
+            findRange = self.findStrRange(ocText: ocText, startIndex: startIndex, findStr: findStr)
             if findRange.length <= 0 {
                 // 查找结束后，结束遍历
                 break
@@ -139,7 +138,7 @@ extension String {
         }
         return rangeList
      }
-    func findStrRange(ocText: NSString, startIndex: Int, findStr1: String) -> NSRange {
+    func findStrRange(ocText: NSString, startIndex: Int, findStr: String) -> NSRange {
          if startIndex >= ocText.length {
              return NSRange(location: 0, length: 0)
          }
@@ -150,7 +149,7 @@ extension String {
          // location: 包含要截取的第一个， length: 从location开始要截取的长度
          let ocSubStr = (startIndex == 0) ? ocText : (ocText.substring(with: NSRange(location: startIndex, length: subLen)) as NSString)
 
-         var findRange = ocSubStr.range(of: findStr1)
+         var findRange = ocSubStr.range(of: findStr)
          if findRange.length <= 0 {
              return NSRange(location: 0, length: 0)
          }
@@ -158,3 +157,4 @@ extension String {
          return resultRange
      }
 }
+```
