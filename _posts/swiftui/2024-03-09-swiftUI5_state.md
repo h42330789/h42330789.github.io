@@ -13,6 +13,7 @@ tags: [SwiftUI]     # TAG names should always be lowercase
 - [SwiftUI教程系列文章汇总](https://juejin.cn/post/7110918270743478279)
 - [SwiftUI教程（七）属性包装器：State、Binding、ObservableObject、EnvironmentObject](https://juejin.cn/post/7112984613102092325)
 - [iOS Combine：核心概念](https://zhiying.space/posts/ios-combine-core-concepts/)
+- [[SwiftUI 知识碎片] 为什么 @State 只能在结构体中工作](https://juejin.cn/post/6844904086823763982)
 
 `var xxx = xxx`: 普通变量，只能读\
 `@State var xxx = xxx`: 当前页面的简直值变量，需要有初始值，可使用，可修改\
