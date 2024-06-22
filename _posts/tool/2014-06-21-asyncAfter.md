@@ -12,7 +12,7 @@ tags: [Tool,Swift]     # TAG names should always be lowercase
 ```
 extension Date {
     static func systemMilliseconds_int64() -> Int64 {
-        return Int64(Date().timeIntervalSince1970)
+        return Int64(Date().timeIntervalSince1970*1000)
     }
 }
 
