@@ -158,3 +158,26 @@ extension String {
      }
 }
 ```
+----
+文字匹配找到的信息的遇到range
+```
+let text = "@asdf123😈😄👪你好 是的👍🏻 @啦🌶sdf 水电费撒旦法"
+let regex = try NSRegularExpression(pattern: "@\\S+")
+// 在文本中查找匹配项
+let matches = regex.matches(in: text, range: NSRange(text.startIndex..., in: text))
+// 对所有的@信息进行处理
+for result in matches {
+    if result.range.length > 1 {
+        // 崩溃 result.range.length比实际的字符长度大
+        let fromOffset = result.range.location
+        let toOffset = fromOffset + result.range.length
+        let startIndex = self.index(self.startIndex, offsetBy: fromOffset)
+        let endIndex = self.index(self.startIndex, offsetBy: toOffset)
+        // 由于emoji长度有问题，会导致崩溃
+       let findText1 = text[startIndex..<endIndex]
+       // 不崩溃
+       let findText2 = (text as NSString).substring(with: NSMakeRange(result.range.location, result.range.length))
+
+    }
+}
+```
