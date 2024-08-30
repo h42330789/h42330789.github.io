@@ -10,3 +10,4 @@ title: 友链
 - [嘟嘟MD](https://juejin.cn/user/3368559354851470/posts)
 - [Swift 编程](https://juejin.cn/column/7322376878139686912)
 - [Z-Library](Https://singlelogin.re)
+- [FANTHUS'S BLOG](https://fanthus.github.io/)
