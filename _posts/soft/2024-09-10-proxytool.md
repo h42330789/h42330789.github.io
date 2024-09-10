@@ -2,8 +2,8 @@
 title: 抓包工具
 author: 独孤流
 date: 2024-09-10 01:04:00 +0800
-categories: [Tool]
-tags: [Tool,Proxy]     # TAG names should always be lowercase
+categories: [Soft]
+tags: [Soft,Proxy]     # TAG names should always be lowercase
 ---
 
 ### 常见抓包工具
