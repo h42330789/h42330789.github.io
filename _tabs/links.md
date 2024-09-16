@@ -11,3 +11,4 @@ title: 友链
 - [Swift 编程](https://juejin.cn/column/7322376878139686912)
 - [Z-Library](Https://singlelogin.re)
 - [FANTHUS'S BLOG](https://fanthus.github.io/)
+- [52im-即时通讯网](http://www.52im.net/)
