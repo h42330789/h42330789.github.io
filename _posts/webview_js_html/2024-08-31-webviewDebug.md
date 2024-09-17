@@ -2,8 +2,8 @@
 title: 使用Safari调试真机或模拟器的wkwebview
 author: 独孤流
 date: 2024-08-30 01:04:00 +0800
-categories: [other, 其他]
-tags: [other]     # TAG names should always be lowercase
+categories: [webview]
+tags: [webview]     # TAG names should always be lowercase
 ---
 
 参考：
