@@ -1,5 +1,5 @@
 ---
-title: 使用wkwebview打开页面会被提示不是Safari的问题
+title: 使用wkwebview打开页面会被提示不是Safari的及自定义UserAgent问题
 author: 独孤流
 date: 2024-09-17 02:04:00 +0800
 categories: [webview]
