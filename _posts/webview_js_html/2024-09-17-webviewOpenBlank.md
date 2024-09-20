@@ -50,8 +50,8 @@ class TestVC: UIViewController {
     func webView(_ webView: WKWebView, createWebViewWith configuration: WKWebViewConfiguration, for navigationAction: WKNavigationAction, windowFeatures: WKWindowFeatures) -> WKWebView? {
         if let urlStr = navigationAction.request.url?.absoluteString, urlStr.isNotBlank {
             if navigationAction.targetFrame == nil || navigationAction.targetFrame?.isMainFrame == false {
-//                webView.load(navigationAction.request)
-                let scriptChangeHeight = "window.location.href=\"\(urlStr)\"; "
+                webView.load(navigationAction.request)
+                // let scriptChangeHeight = "window.location.href=\"\(urlStr)\"; "
                 webView.evaluateJavaScript(scriptChangeHeight)
             }
         }
@@ -73,9 +73,12 @@ class TestVC: UIViewController {
            urlStr.contains("url=https"){
             return true
         }
-        // appstore下载 https://apps.apple.com/xx/app/idxxxxx
+        // appstore下载
+        // https://apps.apple.com/jp/app/surge-5/id1442620678
+        // https://apps.apple.com/cn/app/idxxxxxx
         if urlStr.hasPrefix("https://apps.apple.com"),
-           urlStr.contains("app/id"){
+           urlStr.contains("app/"),
+           urlStr.contains("/id"){
             return true
         }
         return false
