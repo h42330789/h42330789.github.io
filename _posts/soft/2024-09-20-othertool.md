@@ -21,3 +21,4 @@ tags: [Soft]     # TAG names should always be lowercase
 - [Typora](https://typora.io/releases/all)
 - [Xmind](https://apps.apple.com/us/app/xmind-mind-map/id1327661892?mt=12&t=1)
 - [icon-workshop 图标制作](https://apps.apple.com/ph/app/icon-workshop/id654451396?mt=12)
+- [logo-maker/](https://www.designevo.com/cn/logo-maker/)
