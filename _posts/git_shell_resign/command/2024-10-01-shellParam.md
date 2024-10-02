@@ -75,6 +75,7 @@ ipa_name: aaa
 
 ----
 
+
 ### Python获取参数`test.py`
 ```
 #!/usr/bin/python
@@ -131,6 +132,64 @@ print("ext: " + ext)
 参数位置: 12参数内容: 123.03
 current_file_path: /Users/xxx/Downloads/testIpa/test.py
 script_path: /Users/xxx/Downloads/testIpa/test.py
+script_dir_path: /Users/xxx/Downloads/testIpa
+ipa_in_path: /Users/xxx/Desktop/xx/yy/aaa.ipa
+prePath: /Users/xxx/Desktop/xx/yy
+ipa_file_name: aaa.ipa
+ipa_name: aaa
+ext: .ipa
+```
+
+
+----
+### Ruby获取参数`test.rb`
+参考：
+- [Ruby 变量](https://www.runoob.com/ruby/ruby-variable.html)
+```
+# 参数里不不包含脚本自身
+argLen = ARGV.size()
+puts("参数个数：#{argLen}")
+
+for i in 0..(argLen-1)
+    puts("参数位置: #{i} 参数内容: " + ARGV[i])
+end
+
+# 由于参数里不包含脚本本身，所以脚本路径只能从__FILE__里获得
+script_path = __FILE__
+script_dir_path = File.dirname(script_path)
+
+ipa_in_path = ARGV[0]
+prePath = File.dirname(ipa_in_path)
+ipa_file_name = File.basename(ipa_in_path)
+ipa_name = File.basename(ipa_in_path, ".ipa")
+ext = File.extname(ipa_in_path)
+
+puts("script_path: " + script_path)
+puts("script_dir_path: " + script_dir_path)
+puts("ipa_in_path: " + ipa_in_path)
+puts("prePath: " + prePath)
+puts("ipa_file_name: " + ipa_file_name)
+puts("ipa_name: " + ipa_name)
+puts("ext: #{ext}")
+
+# ruby /Users/xxx/Downloads/testIpa/test.rb /Users/xxx/Desktop/xx/yy/aaa.ipa a b c 4 5 6 7 8 hello 你好 123.03
+```
+执行效果
+```
+参数个数：12
+参数位置: 0 参数内容: /Users/xxx/Desktop/xx/yy/aaa.ipa
+参数位置: 1 参数内容: a
+参数位置: 2 参数内容: b
+参数位置: 3 参数内容: c
+参数位置: 4 参数内容: 4
+参数位置: 5 参数内容: 5
+参数位置: 6 参数内容: 6
+参数位置: 7 参数内容: 7
+参数位置: 8 参数内容: 8
+参数位置: 9 参数内容: hello
+参数位置: 10 参数内容: 你好
+参数位置: 11 参数内容: 123.03
+script_path: /Users/xxx/Downloads/testIpa/test.rb
 script_dir_path: /Users/xxx/Downloads/testIpa
 ipa_in_path: /Users/xxx/Desktop/xx/yy/aaa.ipa
 prePath: /Users/xxx/Desktop/xx/yy
