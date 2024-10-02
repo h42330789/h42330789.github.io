@@ -145,6 +145,7 @@ ext: .ipa
 ### Ruby获取参数`test.rb`
 参考：
 - [Ruby 变量](https://www.runoob.com/ruby/ruby-variable.html)
+
 ```
 # 参数里不不包含脚本自身
 argLen = ARGV.size()
@@ -174,6 +175,7 @@ puts("ext: #{ext}")
 
 # ruby /Users/xxx/Downloads/testIpa/test.rb /Users/xxx/Desktop/xx/yy/aaa.ipa a b c 4 5 6 7 8 hello 你好 123.03
 ```
+
 执行效果
 ```
 参数个数：12
