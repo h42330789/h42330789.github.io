@@ -2,8 +2,8 @@
 title: Python生成各种图片的方法
 author: 独孤流
 date: 2024-10-01 01:04:00 +0800
-categories: [other, 其他]
-tags: [python]     # TAG names should always be lowercase
+categories: [git_shell_resign, shell]
+tags: [terminal, python]     # TAG names should always be lowercase
 ---
 
 参考：

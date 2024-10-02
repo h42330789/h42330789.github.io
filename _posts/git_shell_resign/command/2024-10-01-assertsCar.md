@@ -2,8 +2,8 @@
 title: 解析Assets.car
 author: 独孤流
 date: 2024-10-01 02:04:00 +0800
-categories: [other, 其他]
-tags: [Assets]     # TAG names should always be lowercase
+categories: [git_shell_resign, shell]
+tags: [Asserts.car, ipa]     # TAG names should always be lowercase
 ---
 
 参考：

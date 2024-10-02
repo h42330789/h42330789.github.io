@@ -2,8 +2,8 @@
 title: Bash/Shell/Python读取参数及获取基本路径
 author: 独孤流
 date: 2024-10-01 04:04:00 +0800
-categories: [other, 其他]
-tags: [Shell]     # TAG names should always be lowercase
+categories: [git_shell_resign, shell]
+tags: [terminal, shell, python, ruby]     # TAG names should always be lowercase
 ---
 
 > ### 前言
