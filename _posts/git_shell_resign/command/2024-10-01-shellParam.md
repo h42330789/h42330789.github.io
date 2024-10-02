@@ -1,5 +1,5 @@
 ---
-title: Bash/Shell/Python读取参数及获取基本路径
+title: Bash/Shell/Python/Ruby读取参数及获取基本路径
 author: 独孤流
 date: 2024-10-01 04:04:00 +0800
 categories: [git_shell_resign, shell]
