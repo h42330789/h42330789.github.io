@@ -26,3 +26,233 @@ xcrun --sdk iphoneos assetutil --info Assets.car
 ```
 
 #### 方式二、使用三方工具，推荐 [QLCARFiles -- 亲测可用](https://github.com/Timac/QLCARFiles)
+1、下载源代码 [https://github.com/Timac/QLCARFiles](https://github.com/Timac/QLCARFiles)
+2、运行项目
+3、`Product` -> `Show Build Folder in Finder` -> `/Users/xxx/Library/Developer/Xcode/DerivedData/QLCARFiles-xxxxxx/Build/Products/Debug/carDump`
+
+![image](/assets/img/terminal/carDump0.png)
+![image](/assets/img/terminal/carDump1.png)
+![image](/assets/img/terminal/carDump2.png)
+![image](/assets/img/terminal/carDump3.png)
+```
+# 创建解压后的文件
+tempAssertsDirPath
+if [ -d "$tempAssertsDirPath" ]; then
+    echo "删除临时解包目录 rm ${tempAssertsDirPath}"
+    rm -rf "${tempAssertsDirPath}"
+else
+    mkdir $tempAssertsDirPath
+fi
+
+# 正式解压
+carDump Assets.car /Users/xxx/xxx/output
+# 查找AppIcon的图片
+find /Users/xxx/xxx/output -name "AppIcon*.png"
+```
+
+### 复制找到的文件到另外的文件夹
+```
+# 找到aaa文件夹下移AppIcon开头，以.png结尾的文件，复制到bbb文件夹下
+find /xxx/xxx/aaa -name "AppIcon*.png" -print0 | xargs -0 -J % cp % /xxx/xxx/bbb
+# 找到ccc文件夹里类型是pdf的文件，拷贝到ddd里
+find /xxx/xxx/ccc -type f -print0 | xargs -0 -J % cp % /xxx/xxx/ddd
+# 查找出aaa文件夹里最大的文件
+du -s ${iconDir}/* | sort -nr | head -1
+```
+参考：
+- [MacOS find查找文件并批量cp拷贝](https://blog.csdn.net/goodxianping/article/details/119147231)
+- [用shell查找某目录下的最大文件](https://www.cnblogs.com/lixiuran/p/6586675.html)
+
+----
+
+完整解压Ipa并提前Icon的脚本`testUnzip.sh`
+```
+#!/bin/sh
+
+# 读取当前脚本的路径
+script_path=$0
+script_dir_path=$(cd "$(dirname "$0")";pwd)
+
+source_ipa_path=$1
+# ipa路径
+if [ ! -f "$source_ipa_path" ]; then
+    echo "未找到ipa包 $source_ipa_path"
+    exit 2
+fi
+
+temIpaDirPath="${script_dir_path}/tempIpaUnzipDir"
+echo "temIpaDirPath: $temIpaDirPath"
+if [ -d "$temIpaDirPath" ]; then
+    echo "删除临时ipa解包目录 rm ${temIpaDirPath}"
+    rm -rf "${temIpaDirPath}"
+    echo "Ipa解包文件夹删除完成后重新创建文件夹"
+    mkdir $temIpaDirPath
+else
+    echo "ipa解包文件夹不存在，创建文件夹"
+    mkdir $temIpaDirPath
+fi
+# 解包IPA
+if [[ -f "$source_ipa_path" ]]; then
+    echo "unzip $source_ipa_path begin ..."
+    unzip "$source_ipa_path" -d "$temIpaDirPath"
+    echo "unzip $source_ipa_path end"
+fi
+# 找到 *.app 目录及 info.plist
+appDir="$temIpaDirPath/Payload/`ls "$temIpaDirPath/"Payload`"
+echo "appDir: $appDir"
+
+archive_info_plist="${appDir}/Info.plist"
+# 读取打包后的内容
+arhive_bundleId=`/usr/libexec/PlistBuddy -c "Print CFBundleIdentifier" $archive_info_plist`
+arhive_version=`/usr/libexec/PlistBuddy -c "Print CFBundleShortVersionString" $archive_info_plist`
+arhive_buildNumber=`/usr/libexec/PlistBuddy -c "Print CFBundleVersion" $archive_info_plist`
+arhive_appName=`/usr/libexec/PlistBuddy -c "Print CFBundleDisplayName" $archive_info_plist`
+arhive_bundleName=`/usr/libexec/PlistBuddy -c "Print CFBundleName" $archive_info_plist`
+display_name=""
+if [ -z "$arhive_appName" ]
+then
+      display_name="$arhive_bundleName"
+else
+      display_name="$arhive_appName"
+fi
+echo "display_name: $display_name"
+echo "arhive_bundleId: $arhive_bundleId"
+echo "arhive_version: $arhive_version"
+echo "arhive_buildNumber: $arhive_buildNumber"
+echo "arhive_appName: $arhive_appName"
+echo "arhive_bundleName: $arhive_bundleName"
+
+
+# 将AppIcno*png复制到其他文件夹
+iconDir="${temIpaDirPath}/appicons"
+mkdir $iconDir
+find $appDir -name "AppIcon*.png"  -print0 | xargs -0 -J % cp % "$iconDir" 
+
+# Asserts.car路径
+assertsPath="${appDir}/Assets.car"
+echo "assertsPath: $assertsPath"
+if [ ! -f "$source_ipa_path" ]; then
+    echo "未找到Asserts.car $assertsPath"
+    exit 2
+fi
+
+tempAssertsDirPath="${temIpaDirPath}/tempAssertCar"
+echo "tempAssertsDirPath: $tempAssertsDirPath"
+
+if [ -d "$tempAssertsDirPath" ]; then
+    echo "删除临时Asserts.car解包目录 rm ${tempAssertsDirPath}"
+    rm -rf "${tempAssertsDirPath}"
+    echo "Asserts.car解压后的文件夹删除完成后重新创建文件夹"
+    mkdir $tempAssertsDirPath
+else
+    echo "Asserts.car解压后的文件夹不存在，创建文件夹"
+    mkdir $tempAssertsDirPath
+fi
+
+if [ -f $assertsPath ];then
+    # 正式解压
+    carDumpPath="${script_dir_path}/carDump"
+    if [ -f $carDumpPath ];then
+        $carDumpPath $assertsPath $tempAssertsDirPath
+        # 查找AppIcon的图片
+        # find $tempAssertsDirPath -name "AppIcon*.png"
+        find $tempAssertsDirPath -name "AppIcon*.png" -print0 | xargs -0 -J % cp % "$iconDir"
+    fi
+else
+    echo "$assertsPath 不存在"
+fi
+
+lastFindIcon="${iconDir}/findIcon.png"
+if [ "$(ls -A $iconDir)" ]; then
+    echo "$iconDir is not Empty"
+    # 查找最大的文件路径
+    findIconPath=$(du -s ${iconDir}/* | sort -nr | head -1)
+    echo "findIconPathWidthSize: $findIconPath"
+    # 去掉文件路径里的大小，恢复为标准的路径
+    findIconPath="/Users/${findIconPath#*Users/}"
+    echo "findIconPath: $findIconPath"
+    cp $findIconPath "${lastFindIcon}"
+else
+    echo "$iconDir is Empty"
+    echo "需要创建Icon"
+    python3 "${script_dir_path}/makeImage.py" createImg $display_name 512 60 $lastFindIcon
+fi
+
+# sh /Users/xxx/Downloads/testIpa/testUnzip.sh /Users/xxx/Downloads/testIpa/xxx.ipa
+# sh /Users/xxx/Downloads/testIpa/testUnzip.sh /Users/xxx/Downloads/testIpa/xxxx.ipa
+```
+
+`makeImage.py`
+```
+#!/usr/bin/python
+# -*- coding: UTF-8 -*-
+
+import sys
+import os
+from PIL import Image, ImageFont, ImageDraw
+ 
+# 文字设置图片
+def createImg(text, fontSize, width, height, outPath):
+    #画布颜色,背景颜色为白色
+    image = Image.new('RGB', (width, height), (255, 255, 255))
+    draw = ImageDraw.Draw(image)
+    # mac里有这个字体，但是中文会乱码，如果需要中文正常，设置个指定支持的中文字体即可
+    # base_dir = os.path.dirname(os.path.abspath(__file__))
+    # font = ImageFont.truetype(base_dir + "/OPPOSans-M.ttf", fontSize)
+
+    font = ImageFont.truetype('Arial.ttf', fontSize)
+    # 获取文字使用该字体占据的控件
+    x, y, text_width, text_height = font.getbbox(text)
+    # 将文字在画布的中间展示
+    draw.text(((width-text_width)/2, (height-text_height)/2), text, fill=(0, 0, 0), font=font)
+    # 保存图片
+    image.save(outPath)
+
+# 图片压缩
+def resizeImage(inPath, width, height, outPath):
+    img = Image.open(inPath)
+    print(img.size)
+    out = img.resize((width,height))
+    out.save(outPath)
+ 
+# 图片上添加图片
+def imageAddImage(inPath, addPath, outPath):
+    background_image = Image.open(inPath).convert("RGBA")
+    # 打开要添加的图片
+    add_image = Image.open(addPath).convert("RGBA")
+    result_image = Image.new("RGBA", background_image.size)
+    # 将背景图片粘贴到新的图片对象上
+    result_image.paste(background_image, (0, 0))
+    # 将要添加的图片粘贴到新的图片对象上
+    # 放到右下角
+    x = background_image.size[0] - add_image.size[0]
+    y = 0 - 20
+    result_image.paste(add_image, (x, y), add_image)
+    # 保存结果图片
+    result_image.save(outPath)
+
+print(sys.argv)
+scriptPath = sys.argv[0]
+commandType = sys.argv[1]
+if "createImg" in commandType:
+    text = sys.argv[2]
+    width = sys.argv[3]
+    fontSize = sys.argv[4]
+    outPath = sys.argv[5]
+    wh = int(width)
+    createImg(text, int(fontSize), wh, wh, outPath)
+elif "resizeImage" in commandType:
+    inPath = sys.argv[2]
+    width = sys.argv[3]
+    outPath = sys.argv[4]
+    wh = int(width)
+    resizeImage(inPath, wh, wh, outPath)
+elif "imageAddImage" in commandType:
+    inPath = sys.argv[2]
+    addPath = sys.argv[3]
+    outPath = sys.argv[4]
+    imageAddImage(inPath, addPath, outPath)
+# python3 /Users/xxx/Downloads/testIpa/makeImage.py createImg "你好" 512 60 /Users/xxx/Downloads/testIpaaa.png
+# python3 /Users/xxx/Downloads/testIpa/makeImage.py resizeImage "hello你好" 512 60 /Users/xxx/Downloads/testIpa/aa.png
+
+```
