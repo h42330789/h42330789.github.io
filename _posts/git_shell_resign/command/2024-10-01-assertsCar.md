@@ -130,12 +130,7 @@ find $appDir -name "AppIcon*.png"  -print0 | xargs -0 -J % cp % "$iconDir"
 
 # Asserts.car路径
 assertsPath="${appDir}/Assets.car"
-echo "assertsPath: $assertsPath"
-if [ ! -f "$source_ipa_path" ]; then
-    echo "未找到Asserts.car $assertsPath"
-    exit 2
-fi
-
+# 存放解压Asserts.car后的文件夹
 tempAssertsDirPath="${temIpaDirPath}/tempAssertCar"
 echo "tempAssertsDirPath: $tempAssertsDirPath"
 
