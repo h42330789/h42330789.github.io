@@ -10,9 +10,29 @@ tags: [terminal, python, plist]     # TAG names should always be lowercase
 - [iOS小技能：使用PlistBuddy/plutil进行增删改查plist文件](https://juejin.cn/post/7151969500424831012)
 - [【python】str与json类型转换](https://blog.csdn.net/lluozh2015/article/details/75092877)
 - [PlistBuddy基本使用方法](https://juejin.cn/post/6844903716395417614)
+- [PlistBuddy 的使用](https://blog.csdn.net/WangErice/article/details/102599270)
 
 > ### 前言
 > 为了项目打包动态化，需要在Jenkins大包时根据App类型、App环境动态配置scheme，防止测试环境的安装包与线上环境的安装包有一样的scheme，如果有一样的scheme就会导致其他App拉起的App可能未必是期望的App
+
+plist里之前没有的值需要添加：`/usr/libexec/PlistBuddy -c "Add :key type value(array,dict不用写)" plistPath`
+添加一个数组： `/usr/libexec/PlistBuddy -c "Add :xxxx array" $plist_path` \
+添加一个字典：`/usr/libexec/PlistBuddy -c "Add :xxx dict" $plist_path`\
+添加一个具体的值：`/usr/libexec/PlistBuddy -c "Add :xxx string xxx" $plist_path`\
+
+增加一个字段
+`/usr/libexec/PlistBuddy -c "Add :UISupportedInterfaceOrientations array xxx/xxx.plist"` \
+`/usr/libexec/PlistBuddy -c "Add :name string sam" xxx/xxx.plist`
+
+plist里之前已有的查询：`/usr/libexec/PlistBuddy -c "Print :key" plistPath`\
+`/usr/libexec/PlistBuddy -c "Print :name" xxx/xxx.plist`
+
+plist里之前已有的值修改：`/usr/libexec/PlistBuddy -c "Set :key newValue(要跟之前的类型一致)" plistPath`\
+`/usr/libexec/PlistBuddy -c "Set :name tom" xxx/xxx.plist`
+
+plist里之前已有的删除：`/usr/libexec/PlistBuddy -c "Delete :key" plistPath`\
+`/usr/libexec/PlistBuddy -c "Delete :name" xxx/xxx.plist`
+
 
 
 #### 一、使用`plutil`读取全部的plist内容为json格式的数据
@@ -315,3 +335,53 @@ scriptStr33: /usr/libexec/PlistBuddy -c "Add :CFBundleURLTypes:4:CFBundleTypeRol
 添加成功
 ```
 ![image](/assets/img/other/changeScheme.png)
+
+
+----
+创建plist并添加数据的demo: `createPlist.sh`
+```
+#!/bin/sh
+# 不包含脚本自身
+
+basePath=$(cd "$(dirname "$0")";pwd)
+plist_path="${basePath}/test.plist"
+
+
+
+icon57Path="xx/xx/57x57.png"
+icon512Path="xx/xx/512x512.png"
+ipaPath="xx/xx/xxx.ipa"
+appBundleId="aa.bb.cc"
+appVersion="1.0.1"
+appName="hello"
+# https://blog.csdn.net/WangErice/article/details/102599270
+# https://juejin.cn/post/6844903716395417614
+#1.初始化一个test.plist文件
+touch test.plist 
+#2.指定文件格式和编码格式
+echo "<?xml version="1.0" encoding="UTF-8"?><plist version="1.0"><dict></dict></plist>" > $plist_path
+/usr/libexec/PlistBuddy -c "Add :items array" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items: dict" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:assets array" $plist_path
+
+/usr/libexec/PlistBuddy -c "Add :items:0:assets:0 dict" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:assets:0:kind string software-package" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:assets:0:url string $ipaPath" $plist_path
+
+/usr/libexec/PlistBuddy -c "Add :items:0:assets:1 dict" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:assets:1:kind string display-image" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:assets:1:url string $icon57Path" $plist_path
+
+/usr/libexec/PlistBuddy -c "Add :items:0:assets:2 dict" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:assets:2:kind string full-size-image" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:assets:2:url string $icon512Path" $plist_path
+
+/usr/libexec/PlistBuddy -c "Add :items:0:metadata dict" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:metadata:bundle-identifier string $appBundleId" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:metadata:bundle-version string $appVersion" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:metadata:kind string software" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:metadata:subtitle string $appName" $plist_path
+/usr/libexec/PlistBuddy -c "Add :items:0:metadata:title string $appName" $plist_path
+
+# sh /Users/xxx/Downloads/testIpa/createPlist.sh
+```
