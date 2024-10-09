@@ -1,7 +1,7 @@
 ---
-title: python-telegram-bot接收指令
+title: python-telegram-bot接收指令一
 author: 独孤流
-date: 2023-05-24 08:04:00 +0800
+date: 2024-10-08 08:04:00 +0800
 categories: [Telegram, TelegramBot]
 tags: [Telegram_bot]     # TAG names should always be lowercase
 ---
@@ -9,11 +9,13 @@ tags: [Telegram_bot]     # TAG names should always be lowercase
 参考：
 - [python-telegram-bot](https://python-telegram-bot.org/)
 - [docs.python-telegram-bot.org](https://docs.python-telegram-bot.org/en/v21.6/)
+- [https://core.telegram.org/api](https://core.telegram.org/api)
 - [https://github.com/python-telegram-bot/python-telegram-bot](https://github.com/python-telegram-bot/python-telegram-bot)
 - [在Python应用中Telegram 机器人搭建消息提醒](https://foofish.net/telegram-bot-send-message.html)
 - [Python Telegram Bot](https://piaohua.github.io/post/python/20231230-telegram-bot/)
 - [Telegram Bot 简明教程 II - 收指令与指令键盘](https://clox.nu/blog/brief-tutorial-on-telegram-bot-ii/)
 - [Telegram Bot 简明教程 I - 注册与发消息](https://clox.nu/blog/brief-tutorial-on-telegram-bot-i/)
+
 
 ### 一、安装`python-telegram-bot`
 ```
@@ -55,7 +57,7 @@ if __name__ == '__main__':
     # 运行机器人
     application.run_polling()
 
-# python3 /Users/flow/Desktop/bot/testBot1.py
+# python3 /xxx/xxx/testBot1.py
 # ctrl + c 停止运行
 ```
 ![image](/assets/img/telegramBot/botApi1.png)
@@ -117,7 +119,7 @@ if __name__ == '__main__':
     # 运行机器人
     application.run_polling()
 
-# python3 /Users/flow/Desktop/bot/testBot2.py
+# python3 /xxx/xxx/testBot2.py
 # ctrl + c 停止运行
 ```
 

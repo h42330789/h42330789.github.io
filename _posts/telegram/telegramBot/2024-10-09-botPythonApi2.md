@@ -1,12 +1,15 @@
 ---
-title: python-telegram-bot接收指令
+title: python-telegram-bot交互二
 author: 独孤流
-date: 2023-05-24 08:04:00 +0800
+date: 2024-10-09 08:04:00 +0800
 categories: [Telegram, TelegramBot]
 tags: [Telegram_bot]     # TAG names should always be lowercase
 ---
 
 参考：
+- [python-telegram-bot](https://python-telegram-bot.org/)
+- [docs.python-telegram-bot.org](https://docs.python-telegram-bot.org/en/v21.6/)
+- [https://core.telegram.org/api](https://core.telegram.org/api)
 - [Introduction-to-the-API](https://github.com/python-telegram-bot/python-telegram-bot/wiki/Introduction-to-the-API)
 - [Your-first-Bot](https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions---Your-first-Bot)
 
