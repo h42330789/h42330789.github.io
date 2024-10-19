@@ -2,7 +2,7 @@
 title: python读取执行shell后的内容
 author: 独孤流
 date: 2024-09-25 01:04:00 +0800
-categories: [git_shell_resign, shell]
+categories: [git_shell_resign, python]
 tags: [terminal, python]     # TAG names should always be lowercase
 ---
 

@@ -2,7 +2,7 @@
 title: python读取Plist的内容
 author: 独孤流
 date: 2024-09-27 01:04:00 +0800
-categories: [git_shell_resign, shell]
+categories: [git_shell_resign, python]
 tags: [terminal, python, plist]     # TAG names should always be lowercase
 ---
 

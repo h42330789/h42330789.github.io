@@ -2,7 +2,7 @@
 title: Python生成各种图片的方法
 author: 独孤流
 date: 2024-10-01 01:04:00 +0800
-categories: [git_shell_resign, shell]
+categories: [git_shell_resign, python]
 tags: [terminal, python]     # TAG names should always be lowercase
 ---
 
