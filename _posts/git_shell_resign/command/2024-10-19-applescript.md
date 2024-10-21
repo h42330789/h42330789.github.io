@@ -6,11 +6,15 @@ categories: [git_shell_resign, shell]
 tags: [applescript]     # TAG names should always be lowercase
 ---
 
+参考：
+- [AppleScript 入门：探索 macOS 自动化](https://sspai.com/post/46912)
+- [AppleScript脚本快速入门](https://juejin.cn/post/7055599089081122829)
+
 > ### 前言
 > 听人说他们iOS开发者账号莫名其妙被封了好几个，封了后又要重新花钱购买，操作麻烦还费钱
 > 偶然发现虽然账号被封了，但是证书和描述文件还可以使用`Xcode`手动操作打包，但是使用`xcodebuild`就会报错，于是研究了下使用`AppleScript`来模拟手动操作打包
 
-具体代码如下：`test.acpt`, 先使用mac自带的`脚步编辑器`软件创建一个applescript脚步，然后将如下代码copy进入
+具体代码如下：`test.scpt`, 先使用mac自带的`脚步编辑器`软件创建一个applescript脚步，然后将如下代码copy进入
 ```
 on run {codePath, scheme}
 	openXcode(codePath)
