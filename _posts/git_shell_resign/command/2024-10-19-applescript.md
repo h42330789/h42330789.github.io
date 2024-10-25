@@ -9,6 +9,9 @@ tags: [applescript]     # TAG names should always be lowercase
 参考：
 - [AppleScript 入门：探索 macOS 自动化](https://sspai.com/post/46912)
 - [AppleScript脚本快速入门](https://juejin.cn/post/7055599089081122829)
+- [AppleScript脚本入门](https://segmentfault.com/a/1190000011273388)
+- [AppleScript 调用](https://bobtranslate.com/guide/integration/applescript.html)
+- [AppleScript 初体验](https://www.xheldon.com/tech/applescript-simple-use.html)
 
 > ### 前言
 > 听人说他们iOS开发者账号莫名其妙被封了好几个，封了后又要重新花钱购买，操作麻烦还费钱
