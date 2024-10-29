@@ -7,6 +7,8 @@ tags: [memery]     # TAG names should always be lowercase
 ---
 参考：
 - [https://github.com/kstenerud/KSCrash](https://github.com/kstenerud/KSCrash)
+- [内存二三事: Xcode 内存图、Instruments 可视化检测循环引用](https://juejin.cn/post/6844903741104078861)
+- [iOS内存疑惑: 为什么Xcode Navigator和Instuments Allocations差别很大](https://blog.csdn.net/u014600626/article/details/122021983)
 
 > #### 前言
 > 目前线上有好几个用户反馈App用着用着就崩溃了，但是看搜集闪退日志的`Firebase`没有看到任何信息，后面一个同事集成了`https://github.com/kstenerud/KSCrash`后，让用户手动收集崩溃信息，发现是内存使用过度导致
