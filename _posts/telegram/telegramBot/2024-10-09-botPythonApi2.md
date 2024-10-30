@@ -12,6 +12,7 @@ tags: [Telegram_bot]     # TAG names should always be lowercase
 - [https://core.telegram.org/api](https://core.telegram.org/api)
 - [Introduction-to-the-API](https://github.com/python-telegram-bot/python-telegram-bot/wiki/Introduction-to-the-API)
 - [Your-first-Bot](https://github.com/python-telegram-bot/python-telegram-bot/wiki/Extensions---Your-first-Bot)
+- [examples](https://docs.python-telegram-bot.org/en/v21.6/examples.html)
 
 ### API说明：\
 1、`telegram.Bot("TOKEN")`: 初始化Bot
