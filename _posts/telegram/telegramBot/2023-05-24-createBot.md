@@ -60,4 +60,17 @@ curl -s -X POST "https://api.telegram.org/bot$bot_token/sendPhoto" -F chat_id=$g
 curl -s -X POST \
 "https://api.telegram.org/bot$bot_token/sendMessage?chat_id=$group_id" -d parse_mode="HTML" \
 -d text="$notify_msg"
+
+
+# 编辑消息
+curl -X POST "https://api.telegram.org/bot<Your_Bot_API_Token>/editMessageText" \
+     -d "chat_id=<chat_id>" \
+     -d "message_id=<message_id>" \
+     -d "text=<new_message_text>"
+
+# 删除消息
+curl -X POST "https://api.telegram.org/bot<Your_Bot_API_Token>/deleteMessage" \
+     -d "chat_id=<chat_id>" \
+     -d "message_id=<message_id>"
+
 ```
