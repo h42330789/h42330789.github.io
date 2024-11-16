@@ -12,3 +12,4 @@ title: 友链
 - [Z-Library](Https://singlelogin.re)
 - [FANTHUS'S BLOG](https://fanthus.github.io/)
 - [52im-即时通讯网](http://www.52im.net/)
+- [Michael Eisel's Blog--关于速度优化](https://eisel.me/)
