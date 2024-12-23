@@ -10,6 +10,7 @@ tags: [Telegram, im]     # TAG names should always be lowercase
 - [MTProto Mobile Protocol](https://core.telegram.org/mtproto)
 - [MtProtoKit](https://github.com/peter-iakovlev/MtProtoKit)
 - [Source Code Walkthrough of Telegram-iOS Part 4: MTProto Connections](https://hubo.dev/2020-06-05-source-code-walkthrough-of-telegram-ios-part-4/)
+- [Telegram-iOS 源码分析：第四部分（MTProto）](https://www.jianshu.com/p/74fcaa647658)
 - [Telegram 之 MTProtoKit 架构分析](https://blog.makeex.com/2015/06/13/the-architecture-of-telegram-mtprotokit/)
 - [Telegram 之 TL Language](https://blog.makeex.com/2015/06/14/the-tl-language-of-telegram/)
 - [再谈 IM 架构设计（上）](https://blog.makeex.com/2015/08/24/let-us-talk-about-the-im-architecture-again-part-a/)
