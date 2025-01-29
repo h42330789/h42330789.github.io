@@ -55,10 +55,12 @@ class TestJson {
        }
    }
 }
-/**
+
+```
+输入输出结果
+```
 {"name":"abc","age":18,"height":200.12,"nums":[1,3,5], "scores":[7.8,20,-8.09,10,3.1456,"A",D,-90],"web":"aa.com","books":[{"pages":99,"price":19.89, "site":"bb.cm"},{"pages":999,"price":100.012,"site":"bb.net"}]}
 
 
 {"name":"abc","age":18,"height":"200.12","nums":[1,3,5], "scores":["7.8",20,"-8.09",10,"3.1456","A",D,-90],"web":"aa.com","books":[{"pages":99,"price":"19.89", "site":"bb.cm"},{"pages":999,"price":"100.012","site":"bb.net"}]}
-*/
 ```
