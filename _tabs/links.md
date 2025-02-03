@@ -14,3 +14,6 @@ title: 友链
 - [52im-即时通讯网](http://www.52im.net/)
 - [Michael Eisel's Blog--关于速度优化](https://eisel.me/)
 - [MakeEX](https://blog.makeex.com/page/2/)
+- [英语-voicetube](https://tw.voicetube.com/)
+- [英语语法](https://test-english.com/grammar-points/a1/)
+- [英语资源](https://ilacrenee.edublogs.org/links/)
