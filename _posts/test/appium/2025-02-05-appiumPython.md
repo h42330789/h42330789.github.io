@@ -1,9 +1,9 @@
 ---
-title: appium-python脚本测试
+title: appium2：python执行测试脚本
 author: 独孤流
 date: 2025-02-04 00:05:00 +0800
-categories: [Appium自动化测试]
-tags: [appium]     # TAG names should always be lowercase
+categories: [autotest, appium]
+tags: [autotest]     # TAG names should always be lowercase
 ---
 
 使用Python进行测试
