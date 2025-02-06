@@ -25,7 +25,7 @@ Name:	chatgpt.com
 Address: 172.64.155.209
 
 ### 2、修改`OpenVPN`的配置文件，`xxx.ovpn`
-2、找到`OpenVPN`的配置文件，`xxx.ovpn`，这本质上是一个txt文件，使用能打开txt的编辑软件打开, 在之前的route规则下，如果之前没有就在verb3下面增加一条`route 104.18.32.47 255.255.255.255 net_gateway`，打开后的效果如下：
+2、找到`OpenVPN`的配置文件，`xxx.ovpn`，这本质上是一个txt文件，使用能打开txt的编辑软件打开, 在之前的route规则下，如果之前没有就在verb3下面增加找到的ip`route 104.18.32.47 255.255.255.255 net_gateway`，打开后的效果如下：
 ```
 client
 dev tun
@@ -44,6 +44,7 @@ verb 3
 
 # 针对chatgpt添加的路由规则
 route 104.18.32.47 255.255.255.255 net_gateway
+route 172.64.155.209 255.255.255.255 net_gateway
 <ca>
 -----BEGIN CERTIFICATE-----
 xxxx
@@ -68,6 +69,3 @@ xxxx
 
 ### 3、OpenVPN重新导入配置文件
 重新导入修改过后的`xxx.ovpn`文件，开启VPN也可以正常使用`chatgpt`了
-
-
-### 4、悲剧的是，这种方式用了几分钟后就不能使用了ε(┬┬﹏┬┬)3
