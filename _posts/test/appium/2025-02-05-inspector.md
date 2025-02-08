@@ -174,6 +174,7 @@ loginBtn.click()
 
 5.2 通过path获取元素
 - [W3C的操作相关ActionChains](https://selenium-python.readthedocs.io/api.html#selenium.webdriver.common.action_chains.ActionChains.click)
+
 ```
 # 通过path的方式获取，path使用inspector的source面板里获取
 loginBtn = WebDriverWait(driver, 20).until(
