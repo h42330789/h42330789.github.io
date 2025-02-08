@@ -1,5 +1,5 @@
 ---
-title: appium2：python执行测试脚本
+title: appium3：python执行测试脚本
 author: 独孤流
 date: 2025-02-04 12:05:00 +0800
 categories: [autotest, appium]

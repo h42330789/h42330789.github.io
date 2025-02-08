@@ -12,6 +12,16 @@ tags: [autotest]     # TAG names should always be lowercase
 
 前提：\
 1、安装`appium`
+```
+# 安装node环境，如果没有安装
+brew install node
+# 查看node版本
+node -v
+npm -v
+
+# 安装appium,可以是UI版本，也可以是命令行版本，我安装的事命令行版本，方便自动测试脚本运行
+npm install -g appium
+```
 
 2、启动`appium`
 ```
@@ -135,6 +145,7 @@ driver.quit()
 - [WebDriver](https://selenium-python.readthedocs.io/api.html#selenium.webdriver.remote.webdriver.WebDriver)
 - [Alert](https://selenium-python.readthedocs.io/api.html#selenium.webdriver.common.alert.Alert)
 - [docs](https://selenium-python.readthedocs.io/)
+
 ```
 # 比如推送弹出，网络权限弹窗等各种弹窗
 alert = driver.switch_to.alert
