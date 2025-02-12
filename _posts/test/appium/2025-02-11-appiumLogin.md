@@ -1,7 +1,7 @@
 ---
 title: appium4：python完整执行一个login的测试
 author: 独孤流
-date: 2025-02-04 12:05:00 +0800
+date: 2025-02-11 12:05:00 +0800
 categories: [autotest, appium]
 tags: [autotest]     # TAG names should always be lowercase
 ---
