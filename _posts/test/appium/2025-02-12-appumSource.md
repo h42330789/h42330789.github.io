@@ -13,6 +13,7 @@ tags: [autotest]     # TAG names should always be lowercase
 - [appium-路径](https://github.com/appium/appium/blob/master/packages/base-driver/docs/mjsonwp/protocol-methods.md)
 - [appium-路径2](https://github.com/appium/appium/blob/master/packages/base-driver/lib/protocol/routes.js)
 - [appium-xcuitest-driver](https://github.com/appium/appium-xcuitest-driver.git)
+- [appium-ios-device](https://github.com/appium/appium-ios-device.git)
 以查看app是否已经安装为例
 
 ### 1、在inspector里或者直接使用postman调用
@@ -82,15 +83,62 @@ print(response.status_code)  # 输出状态码
 print(response.json())  # 输出响应的 JSON 数据
 ```
 ### 三、对app进行安装和卸载
+调用卸载、安装app的流程
+
+模拟器
+https://github.com/appium/appium/tree/master
+https://github.com/appium/appium-xcuitest-driver
+https://github.com/appium/appium-ios-simulator
+https://github.com/appium/node-simctl
+
+真机
+https://github.com/appium/appium/tree/master
+https://github.com/appium/appium-xcuitest-driver
+https://github.com/appium/appium-ios-device
+调用各个服务
+real-device.js 
+services.startInstallationProxyService
+AfcService
+com.apple.crashreportcopymobile
+
+调用真机或模拟器的device初始化
+determineDevice()
+const device = await getSimulator(this.opts.udid） {getSimulator} from 'appium-ios-simulator';
+const device = new RealDevice(this.opts.udid, this.log); appium-ios-device
+
+https://github.com/appium/appium-xcuitest-driver/blob/master/lib/simulator-management.js
+-> https://github.com/appium/appium-ios-device
+-> https://github.com/appium/appium-ios-simulator/blob/master/lib/extensions/applications.js
+-> https://github.com/appium/node-simctl/blob/master/lib/simctl.js
+-> https://github.com/appium/node-simctl/blob/master/lib/subcommands/uninstall.js
+-> this.exec('uninstall',...)
+-> https://github.com/appium/node-simctl/blob/master/lib/simctl.js -> 'simctl xxxx' 
+-> `xcrun simctl xxxxx`
+`xcrun simctl uninstall booted com.example.myapp`
+`xcrun simctl uninstall ABCD-1234-5678-90EF com.example.myapp`
 ```
 # 操作模拟器使用 xcrun simctl
 # 卸载app
 xcrun simctl uninstall udid的值 bundleId的值
 # 安装app
 xcrun simctl install udid的值 xxx.app的地址
-# 操作真机使用ideviceinstaller
 ```
 
+安装同理
+-> https://github.com/appium/node-simctl/blob/master/lib/subcommands/install.js
+-> this.exec('install',...)
+-> https://github.com/appium/node-simctl/blob/master/lib/simctl.js -> 'simctl xxxx' 
+`xcrun simctl install ABCD-1234-5678-90EF /xx/xx.ipa|app`
+
+流程：
+```
+[HTTP] --> POST /session/4efedc27-f9c1-423b-a24b-563bd678679a/appium/device/remove_app {"appId":"xx.xx.xx"}
+[XCUITestDriver@09b7] Uninstalling the application with bundle identifier 'xx.xx.xx' from the Simulator with UDID '9D5EA427-C4F4-49B3-90D5-4FB1F75554A8'
+```
+`[https://github.com/appium/appium-xcuitest-driver/blob/master/lib/driver.js` -> `async executeCommand(cmd, ...args)` 
+-> `https://github.com/appium/appium-xcuitest-driver/blob/master/lib/commands/app-management.js` -> `async mobileRemoveApp(bundleId)`
+-> `https://github.com/appium/appium-ios-device`
+-> 
 ### 四、如果电脑（Mac或pc都可以）安装了go-ios，直接使用go-ios执行命令
 
 这使得PC上的管理工具（例如 iTunes、libimobiledevice、go‑ios 等）能够通过建立与设备之间的通信连接，发送命令来调用和控制这些服务的功能。
@@ -163,7 +211,5 @@ installionproxy.go
 -> `b = xxxx; c.deviceConn.Send(b)` (组装命令，执行命令)
 
 
-https://github.com/appium/appium-xcuitest-driver
-
-BaseDriver -> XCUITestDriver -> 
+----
 

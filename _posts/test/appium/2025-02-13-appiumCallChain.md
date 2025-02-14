@@ -213,3 +213,47 @@ BOOL FBTypeText(NSString *text, NSUInteger typingSpeed, NSError **error)
   return [FBXCTestDaemonsProxy synthesizeEventWithRecord:eventRecord error:error];
 }
 ```
+
+----
+调用卸载、安装app的流程
+
+模拟器
+https://github.com/appium/appium/tree/master
+https://github.com/appium/appium-xcuitest-driver
+https://github.com/appium/appium-ios-simulator
+https://github.com/appium/node-simctl
+
+真机
+https://github.com/appium/appium/tree/master
+https://github.com/appium/appium-xcuitest-driver
+https://github.com/appium/appium-ios-device
+调用各个服务
+real-device.js 
+services.startInstallationProxyService
+AfcService
+com.apple.crashreportcopymobile
+
+调用真机或模拟器的device初始化
+determineDevice()
+const device = await getSimulator(this.opts.udid） {getSimulator} from 'appium-ios-simulator';
+const device = new RealDevice(this.opts.udid, this.log); appium-ios-device
+
+https://github.com/appium/appium-xcuitest-driver/blob/master/lib/simulator-management.js
+-> https://github.com/appium/appium-ios-device
+-> https://github.com/appium/appium-ios-simulator/blob/master/lib/extensions/applications.js
+-> https://github.com/appium/node-simctl/blob/master/lib/simctl.js
+-> https://github.com/appium/node-simctl/blob/master/lib/subcommands/uninstall.js
+-> this.exec('uninstall',...)
+-> https://github.com/appium/node-simctl/blob/master/lib/simctl.js -> 'simctl xxxx' 
+-> `xcrun simctl xxxxx`
+`xcrun simctl uninstall booted com.example.myapp`
+`xcrun simctl uninstall ABCD-1234-5678-90EF com.example.myapp`
+
+
+安装同理
+-> https://github.com/appium/node-simctl/blob/master/lib/subcommands/install.js
+-> this.exec('install',...)
+-> https://github.com/appium/node-simctl/blob/master/lib/simctl.js -> 'simctl xxxx' 
+`xcrun simctl install ABCD-1234-5678-90EF /xx/xx.ipa|app`
+
+
