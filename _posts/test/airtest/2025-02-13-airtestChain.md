@@ -11,6 +11,8 @@ https://github.com/AirtestProject/Airtest/blob/master/airtest/core/api.py
 https://github.com/openatx/facebook-wda
 https://github.com/openatx/facebook-wda/blob/master/wda/__init__.py
 
+![image](/assets/img/test/appium/airtest.drawio.png)
+
 ```
 def touch(v, times=1, **kwargs):
     """

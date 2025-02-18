@@ -6,6 +6,8 @@ categories: [autotest, appium]
 tags: [autotest]     # TAG names should always be lowercase
 ---
 
+![image](/assets/img/test/appium/appium.drawio.png)
+
 1、python文件里从查找元素到点击元素
 ```
 welcomeStartBtn = WebDriverWait(driver, 2.5).until(
