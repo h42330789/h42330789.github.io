@@ -60,7 +60,10 @@ extension String {
     }
 }
 ```
+
 `String`、`Int`、`Int`、`Int64`、`Bool`、`Dictionary`使用扩展获取获取内容
+
+
 ```
 // MARK: 各类工具扩展
 extension String {
@@ -605,6 +608,7 @@ class JSONParser {
 ```
 
 使用方式
+
 ```
 let str = "{\"name\":\"jim\",\"age\":10, \"height\": 1.650, \"payList\": [{\"fee:\": -40.56},{\"fee:\": -44.00},{\"fee:\": -44.40},{\"fee:\": -42.00},{\"fee:\": 0.00}]}"
 
