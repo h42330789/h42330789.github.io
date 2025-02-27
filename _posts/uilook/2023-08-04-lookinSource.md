@@ -2,8 +2,8 @@
 title: LookIn源码研究与学习
 author: 独孤流
 date: 2023-08-04 23:12:00 +0800
-categories: [UIInspector]
-tags: [mac]     # TAG names should always be lowercase
+categories: [UI查看]
+tags: [lookin]     # TAG names should always be lowercase
 ---
 
 源码地址：
