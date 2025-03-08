@@ -391,9 +391,9 @@ let age = dict?.getInt32("age")
 let height = dict?.getString("height")
 ```
 ----
-### 方案二、不使用系统的`JSONSerialization.jsonObject`,自己写解析JSON字符串的类,遇到数字时，如果有小数点，都转换成字符串，这样会更灵活
+### ~~方案二、不使用系统的`JSONSerialization.jsonObject`,自己写解析JSON字符串的类,遇到数字时，如果有小数点，都转换成字符串，这样会更灵活~~
 
-##### 2.1、使用正则将原始字符串中的数字全部补上双引号，由于场景覆盖不全，且一些没有小数位的也处理了，容易处理出错以及复杂，已废弃
+##### ~~2.1、使用正则将原始字符串中的数字全部补上双引号，由于场景覆盖不全，且一些没有小数位的也处理了，容易处理出错以及复杂，已废弃~~
 ```
 // 正则表达式匹配 JSON 中的浮点数（带小数位的数字）
 static func convertFloatsToStrings(in jsonString: String?) -> String? {
@@ -448,7 +448,9 @@ func convertFloatsToStrings2(in jsonString: String?) -> String? {
 
 ```
 
-##### 2.2 将原始字符串自定义json解析
+##### ~~2.2 将原始字符串自定义json解析（已废弃）~~
+这个自定义的写的不够完善，遇到一些emoji或Unicode码会导致抛出异常
+
 ```
 enum JSONError: Error {
     case invalidJSON
@@ -664,7 +666,7 @@ class JSONParser {
 }
 ```
 
-##### 2.3 使用开源的项目修改
+##### 2.3 使用开源的项目修改（推荐）
 - [https://github.com/swiftdo/json](https://github.com/swiftdo/json)
 - [Swift 码了个 JSON 解析器(一)](https://oldbird.run/swift/fp/t3-json1.html)
 - [Swift 码了个 JSON 解析器(二)](https://oldbird.run/swift/fp/t3-json2.html)
@@ -1021,6 +1023,7 @@ class JSONParserNew {
 
 ```
 let str = "{\"name\":\"jim\",\"age\":10, \"height\": 1.650, \"payList\": [{\"fee:\": -40.56},{\"fee:\": -44.00},{\"fee:\": -44.40},{\"fee:\": -42.00},{\"fee:\": 0.00}]}"
+let jsonString = "{\"emoji\": \"😀👨‍👩‍👧‍👦🌍\",\"unicode\": \"\\uD83D\\uDE00\",\"name\":\"Byby&$%+~\\u003C\\u003E\",\"price\": 189, \"a1\": 1.23e4, \"a2\": 12e-4}"
 
 if let data = str.data(using: String.Encoding.utf8),
     let dict1 = try? JSONSerialization.jsonObject(with: data, options: []) as? [String: Any] {
