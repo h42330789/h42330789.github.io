@@ -391,7 +391,64 @@ let age = dict?.getInt32("age")
 let height = dict?.getString("height")
 ```
 ----
-### 方案二、不适用系统的`JSONSerialization.jsonObject`,自己写解析JSON字符串的类,遇到数字时，如果有小数点，都转换成字符串，这样会更灵活
+### 方案二、不使用系统的`JSONSerialization.jsonObject`,自己写解析JSON字符串的类,遇到数字时，如果有小数点，都转换成字符串，这样会更灵活
+
+##### 2.1、使用正则将原始字符串中的数字全部补上双引号，由于场景覆盖不全，且一些没有小数位的也处理了，容易处理出错以及复杂，已废弃
+```
+// 正则表达式匹配 JSON 中的浮点数（带小数位的数字）
+static func convertFloatsToStrings(in jsonString: String?) -> String? {
+    guard let jsonString = jsonString, !jsonString.isEmpty else {
+        return jsonString
+    }
+    
+    // 正则表达式匹配 JSON 中的浮点数
+    let pattern = #"-?\d+\.\d+"#
+    
+    do {
+        let regex = try NSRegularExpression(pattern: pattern, options: [])
+        
+        // 替换匹配的浮点数为带双引号的字符串
+        var modifiedString = jsonString
+        let matches = regex.matches(in: jsonString, options: [], range: NSRange(location: 0, length: jsonString.utf16.count))
+        
+        // 从后往前替换，避免影响后续匹配的范围
+        for match in matches.reversed() {
+            if let range = Range(match.range, in: jsonString) {
+                let matchedString = String(jsonString[range])
+                let replacement = "\"\(matchedString)\""
+                modifiedString.replaceSubrange(range, with: replacement)
+            }
+        }
+        
+        return modifiedString
+    } catch {
+        print("正则表达式错误: \(error)")
+        return jsonString
+    }
+
+}
+// 正则表达式匹配 JSON 中的浮点数（带小数位的数字）
+func convertFloatsToStrings2(in jsonString: String?) -> String? {
+    guard let jsonString = jsonString, jsonString.count > 0 else {
+        return jsonString
+    }
+    let pattern = #"(\s*:\s*)(\d+\.\d+)(\s*[,}\]])"#
+    let regex = try! NSRegularExpression(pattern: pattern, options: [])
+    
+    // 替换匹配的浮点数为带双引号的字符串
+    let modifiedString = regex.stringByReplacingMatches(
+        in: jsonString,
+        options: [],
+        range: NSRange(location: 0, length: jsonString.utf16.count),
+        withTemplate: "$1\"$2\"$3"
+    )
+    
+    return modifiedString
+}
+
+```
+
+##### 2.2 将原始字符串自定义json解析
 ```
 enum JSONError: Error {
     case invalidJSON
@@ -607,6 +664,358 @@ class JSONParser {
 }
 ```
 
+##### 2.3 使用开源的项目修改
+- [https://github.com/swiftdo/json](https://github.com/swiftdo/json)
+- [Swift 码了个 JSON 解析器(一)](https://oldbird.run/swift/fp/t3-json1.html)
+- [Swift 码了个 JSON 解析器(二)](https://oldbird.run/swift/fp/t3-json2.html)
+- [Swift 码了个 JSON 解析器(三)](https://oldbird.run/swift/fp/t3-json3.html)
+```
+import Foundation
+
+
+extension StringProtocol {
+    subscript(offset: Int) -> Character {
+        if offset > count {
+            fatalError("offset 越界:\(offset)")
+        }
+        let c = self[index(startIndex, offsetBy: offset)]
+        return c
+    }
+}
+
+
+class JSONParserNew {
+    // Swift 码了个 JSON 解析器(一) https://oldbird.run/swift/fp/t3-json1.html
+    // Swift 码了个 JSON 解析器(二) https://oldbird.run/swift/fp/t3-json2.html
+    // Swift 码了个 JSON 解析器(三) https://oldbird.run/swift/fp/t3-json3.html
+
+    // 解析原理：
+    // * 解析对象 {}
+    //   对象结构是 `{"Key": [值]}` 的格式，所以先解析到Key字符串，将Key 解析出来，然后再解析值，因为值有可能 [`字符串`、`值类型`、`布尔类型`、`对象`、`数组`、`null`] 所以需要根据前缀得到类型，并调用相应的解析方法，循环解析到 `}` 对象的结尾
+    // * 解析数组 []
+    //   对象的结构是 `[[值]、[值]]`，因为值有可能是 [`字符串`、`值类型`、`布尔类型`、`对象`、`数组`、`null`] 所以需要根据前缀得到类型，并调用相应的解析方法，循环解析到 `}` 对象的结尾
+    // * 解析字符串
+    //   循环解析，需要判断是否遇到转义符`\`如果遇到，当前字符的下一个字符将是作为普通字符存入结果，如果遇到非转义的 " 字符则退出字符串读取方法，并返回结果
+    // * 解析值类型
+    //   循环拉取[0-9]包括.符号，然后调用转换成double类型方法
+    // * 解析布尔类型
+    //   转判断是 true 还是 false
+    // * 解析null
+    //   转判断是否为 null
+
+    struct ParserError: Error, CustomStringConvertible {
+        let message: String
+        
+        init(msg: String) {
+            self.message = msg
+        }
+        
+        var description: String {
+            return "ParserError: \(message)"
+        }
+    }
+    var originString: String = ""
+    var double2String: Bool = true
+    var openScience: Bool = true
+    init(double2String: Bool = true, openScience: Bool = true) {
+        self.double2String = double2String
+        self.openScience = openScience
+    }
+    /// 解析 JSON 字符串为 JSON
+    func parseJson(str: String?) throws -> Any {
+        guard let str = str else {
+            throw ParserError(msg: "json字符串为空")
+        }
+        var index = 0
+        // 读取非空白字符
+        index = readToNonBlankIndex(str: str, index: index)
+
+        let ch = str[index]
+        index += 1
+
+        if ch == "[" {
+            // 解析数组
+            return try parseArray(str: str, index: index).0
+        }
+
+        // 解析对象
+        return try parseObject(str: str, index: index).0
+    }
+    
+    /// 解析JSON字符串为对象结构
+    func parseObject(str: String, index: Int) throws -> (Any, Int) {
+        var ind = index
+        var obj: [String: Any] = [:]
+
+        repeat {
+            ind = readToNonBlankIndex(str: str, index: ind)
+            if str[ind] != "\"" {
+                throw ParserError(msg: "不能识别的字符“\(str[ind]) ind:\(ind) str:\(str)”")
+            }
+            ind += 1
+
+            // 读取字符串
+            let (name, ids) = try readString(str: str, index: ind)
+            ind = ids
+
+            if obj.keys.contains(name) {
+                throw ParserError(msg: "已经存在key: \(name) ind:\(ind) str:\(str)")
+            }
+            ind = readToNonBlankIndex(str: str, index: ind)
+
+            if str[ind] != ":" {
+                throw ParserError(msg: "不能识别字符:\(str[ind]) ind:\(ind) str:\(str)")
+            }
+
+            ind += 1
+            ind = readToNonBlankIndex(str: str, index: ind)
+
+            /// 读取下一个 element
+            let next = try readElement(str: str, index: ind)
+            ind = next.1
+            obj[name] = next.0
+
+            /// 读取到非空白字符
+            ind = readToNonBlankIndex(str: str, index: ind)
+
+            let ch = str[ind]
+            ind += 1
+            if ch == "}" { break }
+            if ch != "," {
+                throw ParserError(msg: "不能识别的字符 ind:\(ind) str:\(str)")
+            }
+        } while true
+
+        return (obj, ind)
+    }
+
+    /// 解析JSON字符串为数组结构
+    func parseArray(str: String, index: Int) throws -> (Any, Int) {
+        var arr: [Any] = []
+        var ind = index
+        repeat {
+            ind = readToNonBlankIndex(str: str, index: ind)
+            /// 读取下一个element
+            let ele = try readElement(str: str, index: ind)
+            ind = ele.1
+            arr.append(ele.0)
+            /// 读取非空白字符
+            ind = readToNonBlankIndex(str: str, index: ind)
+
+            let ch = str[ind]
+            ind += 1
+            if ch == "]" { break }
+            if ch != "," {
+                throw ParserError(msg: "不能识别的字符 ind:\(ind) str:\(str)")
+            }
+        } while true
+
+        return (arr, ind)
+    }
+
+    /// 读取下一个
+    func readElement(str: String, index: Int) throws -> (Any, Int) {
+        var ind = index
+        let c = str[ind]
+        ind += 1
+        switch c {
+        case "[":
+            return try parseArray(str: str, index: ind)
+        case "{":
+            return try parseObject(str: str, index: ind)
+        case "\"":
+            let (str, ids) = try readString(str: str, index: ind)
+            return (str, ids)
+        case "t":
+            return try readJsonTrue(str: str, index: ind)
+        case "f":
+            return try readJsonFalse(str: str, index: ind)
+        case "n":
+            return try readJsonNull(str: str, index: ind)
+        case _ where isNumber(c: c):
+            return try readJsonNumber(str: str, index: ind)
+        default:
+            throw ParserError(msg: "未知 element: \(c) \(ind) \(str)")
+        }
+    }
+
+    func readJsonNumber(str: String, index: Int) throws -> (Any, Int) {
+        var ind = index - 1
+        var value: [Character] = []
+        
+        while ind < str.count && isNumber(c: str[ind]) {
+            value.append(str[ind])
+            ind += 1
+        }
+        var str = String(value)
+        // 科学计数法
+        // 123.4e5 = 123.4 -> 小数点往后移5位
+        // 123.4e-5 = 123.4*0.00001 -> 小数点往前移动5位
+        if value.count >= 3, value[value.count-2] == "e" {
+//            let number1 = NSDecimalNumber(string: str)
+//            print(number1)
+            // 小数点往后移动
+        } else if value.count >= 4, value[value.count-3] == "e", value[value.count-2] == "-" {
+            // 小数点往前移动
+            if openScience {
+                let number1 = NSDecimalNumber(string: str)
+                str = "\(number1)"
+            }
+            
+        }
+        if str.contains(".") {
+            if double2String {
+                if str.contains("e"), let dval = Double(str) {
+                    str = "\(dval)"
+                }
+                return (str, ind)
+            } else {
+                if let v = Double(str) {
+                    return (v, ind)
+                }
+            }
+            
+        } else {
+            if let val = Int64(str) {
+                if val <= Int64(Int32.max) {
+                    // 如果是Int32以内，使用Int32
+                    return (Int32(val), ind)
+                } else if val <= Int64(Int.max) {
+                    // 如果是Int范围使用Int
+                    return (Int(val), ind)
+                }
+                return (val, ind)
+            }
+        }
+        throw ParserError(msg: "不能识别的数字类型\(ind) ind:\(ind) \(str)")
+    }
+
+
+    func readJsonNull(str: String, index: Int) throws -> (Any, Int) {
+        return try readJsonCharacters(str: str,
+                                      index: index,
+                                      characters: ["u", "l", "l"],
+                                      error: ParserError(msg: "读取null值出错 ind:\(index) str:\(str)"),
+                                      json: NSNull())
+    }
+
+    func readJsonFalse(str: String, index: Int) throws -> (Any, Int) {
+        return try readJsonCharacters(str: str,
+                                      index: index,
+                                      characters: ["a", "l", "s", "e"],
+                                      error: ParserError(msg: "读取false值出错 ind:\(index) str:\(str)"),
+                                      json: false)
+    }
+
+    func readJsonTrue(str: String, index: Int) throws -> (Any, Int) {
+        return try readJsonCharacters(str: str,
+                                      index: index,
+                                      characters: ["r", "u", "e"],
+                                      error: ParserError(msg: "读取true值出错 ind:\(index) str:\(str)"),
+                                      json: true)
+    }
+
+    /// 读取字符串
+    func readString(str: String, index: Int) throws -> (String, Int) {
+        var ind = index
+        var value: [Character] = []
+
+        while ind < str.count {
+            
+            var c = str[ind]
+            ind += 1
+            
+            if c == "\\" { // 判断是否是转义字符
+                value.append("\\")
+                if ind >= str.count {
+                    throw ParserError(msg: "未知结尾 ind:\(ind) str:\(str)")
+                }
+
+                c = str[ind]
+                ind += 1
+                value.append(c)
+
+                if c == "u" {
+                    try (0 ..< 4).forEach { _ in
+                        c = str[ind]
+                        ind += 1
+
+                        if isHex(c: c) {
+                            value.append(c)
+                        } else {
+                            throw ParserError(msg: "不是有效的unicode 字符 ind:\(ind) str:\(str)")
+                        }
+                    }
+                }
+            } else if c == "\"" {
+                break
+            } else if c == "\r" || c == "\n" {
+                throw ParserError(msg: "传入的JSON字符串内容不允许有换行 ind:\(ind) str:\(str)")
+            } else {
+                value.append(c)
+            }
+            
+        }
+
+        return (String(value), ind)
+    }
+
+
+    /// 读取到非空白字符, index 指向的是非空白字符的位置
+    func readToNonBlankIndex(str: String, index: Int) -> Int {
+        var ind = index
+        while ind < str.count && str[ind] == " " {
+            ind += 1
+        }
+        return ind
+    }
+
+    /// tools
+    func readJsonCharacters(str: String, index: Int, characters: [Character], error: ParserError, json: Any) throws -> (Any, Int) {
+        var ind = index
+        var result = true
+        
+        for i in 0 ..< characters.count {
+            if str.count <= ind || str[ind] != characters[i] {
+                result = false
+                break
+            }
+            ind += 1
+        }
+        if result {
+            return (json, ind)
+        }
+        throw error
+    }
+
+    /// 判断是否是数字字符
+    func isNumber(c: Character) -> Bool {
+        
+        let chars:[Character: Bool] = ["-": true, "+": true, "e": true, "E": true, ".": true]
+        
+        if let b = chars[c], b {
+            return true
+        }
+        
+        if(c >= "0" && c <= "9") {
+            return true
+        }
+        
+        return false;
+    }
+
+    /// 判断是否为 16 进制字符
+    func isHex(c: Character) -> Bool {
+        return c >= "0" && c <= "9" || c >= "a" && c <= "f" || c >= "A" && c <= "F"
+    }
+
+
+}
+
+```
+
+
+
 使用方式
 
 ```
@@ -641,6 +1050,19 @@ do {
 } catch {
     print(error)
 }
+
+do {
+    let parser = JSONParserNew()
+    let dict4 = try parser.parseJson(str: str) as? [String: Any]
+    let name4 = dict4?.getString("name")
+    let age4 = dict4?.getInt32("age")
+    let height4 = dict4?.getString("height")
+    print(dict4 ?? [:])
+    print("name4: \(name4 ?? "") age4: \(age4 ?? 0) height4: \(height4 ?? "")\n")
+} catch {
+    print(error)
+}
+
 
 ```
 
