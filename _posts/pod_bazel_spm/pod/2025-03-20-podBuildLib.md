@@ -546,3 +546,5 @@ target 'TestPodspec' do
 
 end
 ```
+
+![iamge](/assets/img/pod/BUILD_podspec_lib.png)
