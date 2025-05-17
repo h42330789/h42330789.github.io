@@ -284,3 +284,60 @@ KingfisherManager.shared.defaultOptions += [
 ```
 
 在使用的地方正常使用即可
+
+----
+##### 7、Kingfisher主动缓存到硬盘
+有些场景下，比如上传了图片后，希望直接缓存到硬盘，省的多一次下载
+```
+let filePath = "/Users/xxx/xx/aa.png"
+let uploadUrl = "https://xx/xx/aa.png"
+let fileURL = URL(fileURLWithPath: filePath)
+let data = try Data(contentsOf: fileURL)
+ImageCache.default.storeToDisk(data, forKey: uploadUrl)
+```
+
+##### 8、Kingfisher预加载
+某些场景下，需要对一些网络图片进行预加载，方便使用时快速展示没有加载过程
+```
+let prefetcher = ImagePrefetcher(
+    urls: urls,
+    options: [
+        .doNotCacheMemory                         // 不保留在内存缓存（可选）
+    ]
+) { skipped, failed, completed in
+    print("跳过 \(skipped.count)，成功 \(completed.count)，失败 \(failed.count)")
+}
+
+prefetcher.start()
+```
+
+##### 9、下载图片后自定义解密
+在某些场景下，图片由于加密了，下载后的图片需要进行解密后才能显示
+```
+import Kingfisher
+
+struct SmartDecryptionModifier: ImageDataModifier {
+    func modify(_ data: Data) -> Data? {
+        if isEncrypted(data) {
+            return decrypt(data)
+        } else {
+            return data // 原样返回
+        }
+    }
+    
+    private func isEncrypted(_ data: Data) -> Bool {
+        // 示例：检查前缀、自定义 magic number、Header bytes 等
+        return data.starts(with: [0xAB, 0xCD]) // 举例：加密数据头部是 0xABCD
+    }
+    
+    private func decrypt(_ data: Data) -> Data? {
+        // 替换为你自己的解密实现，比如 AES、ChaCha 等
+        return MyCrypto.decrypt(data: data)
+    }
+}
+KingfisherManager.shared.defaultOptions += [
+    .dataModifier(SmartDecryptionModifier()),
+    .processor(WebPProcessor.default),
+    .cacheSerializer(WebPSerializer.default)
+]
+```
