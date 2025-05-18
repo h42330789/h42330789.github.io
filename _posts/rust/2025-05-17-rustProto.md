@@ -2,7 +2,7 @@
 title: rust编译proto文件
 author: 独孤流
 date: 2025-05-17 10:14:00 +0800
-categories: [other, 其他]
+categories: [rust]
 tags: [iOS]     # TAG names should always be lowercase
 ---
 
