@@ -341,3 +341,11 @@ KingfisherManager.shared.defaultOptions += [
     .cacheSerializer(WebPSerializer.default)
 ]
 ```
+
+----
+由于Kingfisher在进入后台后会对一些过期资源进行内存清理，导致从后台进入前台后会出现闪烁的情况，解决方案是可以将进入后台的监听手动关闭
+```
+        // 防止Kingfisher进入后台后清理资源导致闪烁
+        NotificationCenter.default.removeObserver(KingfisherManager.shared.cache, name: UIApplication.didEnterBackgroundNotification, object: nil)
+
+```
