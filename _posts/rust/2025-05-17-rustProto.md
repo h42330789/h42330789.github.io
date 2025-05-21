@@ -342,4 +342,309 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 ### 4、即使在不同文件里定义的枚举的内部名称，只要相同就会编译失败
 
-### 5、将
+### 5、使用自动化脚步自动将一般的proto格式改成rust支持的格式
+`proto_package.py`
+```
+#!/usr/bin/env python3
+import os
+import re
+import logging
+import shutil
+from typing import Dict, Set, Tuple, List
+from pathlib import Path
+
+# 配置日志
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+class ProtoProcessor:
+    def __init__(self):
+        # 获取脚本所在目录的绝对路径
+        self.script_dir = Path(os.path.dirname(os.path.abspath(__file__)))
+        # 临时目录名称
+        self.temp_dir_name = "temp_protos"
+        # 临时目录的完整路径
+        self.temp_dir = self.script_dir / self.temp_dir_name
+        
+    def setup_temp_dir(self):
+        """设置临时目录，如果存在则先删除"""
+        if self.temp_dir.exists():
+            logging.info(f"删除已存在的临时目录: {self.temp_dir}")
+            shutil.rmtree(self.temp_dir)
+        
+        logging.info(f"创建临时目录: {self.temp_dir}")
+        self.temp_dir.mkdir(parents=True)
+        
+        # 复制所有.proto文件到临时目录
+        for proto_file in self.script_dir.glob("*.proto"):
+            if proto_file.is_file():
+                shutil.copy2(proto_file, self.temp_dir)
+        logging.info("所有.proto文件已复制到临时目录")
+
+    def get_imported_protos(self, content: str) -> List[Tuple[str, str]]:
+        """获取所有导入的proto文件名及其路径"""
+        imports = re.findall(r'import\s+"([^"]+)"', content)
+        return [(os.path.splitext(os.path.basename(imp))[0], imp) for imp in imports]
+
+    def extract_nested_types(self, content: str, parent_type: str = "") -> Set[str]:
+        """提取嵌套的message和enum类型定义"""
+        nested_types = set()
+        # 匹配message或enum定义块
+        blocks = re.finditer(r'(message|enum)\s+(\w+)\s*{([^}]*)}', content)
+        for block in blocks:
+            type_kind, type_name, block_content = block.groups()
+            full_type_name = f"{parent_type}.{type_name}" if parent_type else type_name
+            nested_types.add(full_type_name)
+            # 递归处理嵌套类型
+            nested_types.update(self.extract_nested_types(block_content, full_type_name))
+        return nested_types
+
+    def build_type_mapping(self) -> Dict[str, Tuple[str, str]]:
+        """构建类型到文件的映射字典，包括嵌套类型"""
+        type_mapping = {}  # 类型名 -> (包名, 文件名)
+        
+        # 第一遍：收集所有类型定义
+        for proto_file in self.temp_dir.glob("*.proto"):
+            if not proto_file.is_file():
+                continue
+                
+            package_name = proto_file.stem
+            content = proto_file.read_text(encoding='utf-8')
+                
+            # 获取所有顶层和嵌套的类型定义
+            all_types = self.extract_nested_types(content)
+                
+            # 添加到映射字典
+            for type_name in all_types:
+                if type_name in type_mapping:
+                    logging.warning(f"类型 {type_name} 在多个文件中定义: {type_mapping[type_name][1]} 和 {proto_file.name}")
+                else:
+                    type_mapping[type_name] = (package_name, proto_file.name)
+        
+        logging.info(f"共发现 {len(type_mapping)} 个类型定义")
+        return type_mapping
+
+    def ensure_package_declaration(self, content: str, package_name: str) -> str:
+        """确保文件有package声明，如果没有则添加"""
+        if not re.search(r'^package\s+[\w.]+\s*;', content, re.MULTILINE):
+            # 在syntax声明后添加package声明，处理各种可能的注释格式
+            content = re.sub(
+                r'(syntax\s*=\s*"proto3"\s*;)(\s*(?://[^\n]*\n|\s)*)', 
+                r'\1\n\npackage ' + package_name + r';\n\2', 
+                content
+            )
+            logging.info(f"已添加package声明: {package_name}")
+        return content
+
+    def process_type_reference(self, match: re.Match, type_mapping: Dict[str, Tuple[str, str]], 
+                             package_name: str, local_types: Set[str], imported_packages: Dict[str, str]) -> str:
+        """处理类型引用，添加包名前缀"""
+        full_match = match.group(0)
+        type_name = match.group(1)
+        field_part = match.group(2)
+        
+        # 如果已经有包名前缀，不处理
+        if '.' in type_name:
+            return full_match
+            
+        # 如果是基本类型，不处理
+        basic_types = {'string', 'int32', 'int64', 'bool', 'bytes', 'double', 'float', 'map', 'repeated'}
+        if type_name.lower() in basic_types:
+            return full_match
+            
+        # 如果是本文件定义的类型，不处理
+        if type_name in local_types:
+            return full_match
+            
+        # 如果是引入的类型，添加包名前缀
+        if type_name in type_mapping:
+            ref_package, ref_file = type_mapping[type_name]
+            if ref_package != package_name and ref_package in imported_packages:
+                # 确保字段名部分不包含包名前缀
+                field_match = re.match(r'(\s+)([\w.]+)(\s*=\s*\d+.*)', field_part)
+                if field_match:
+                    spaces, field_name, field_def = field_match.groups()
+                    # 如果字段名包含点号，只取最后一部分
+                    clean_field_name = field_name.split('.')[-1]
+                    return f"{ref_package}.{type_name}{spaces}{clean_field_name}{field_def}"
+                return f"{ref_package}.{type_name}{field_part}"
+        
+        return full_match
+
+    def process_proto_file(self, file_path: Path, type_mapping: Dict[str, Tuple[str, str]]) -> None:
+        """处理单个proto文件"""
+        package_name = file_path.stem
+        logging.info(f"正在处理文件: {file_path.name}")
+        
+        content = file_path.read_text(encoding='utf-8')
+        
+        # 确保有package声明
+        content = self.ensure_package_declaration(content, package_name)
+        
+        # 获取导入的包
+        imported_packages = dict(self.get_imported_protos(content))
+        if not imported_packages:
+            # 如果没有导入，只需要确保有package声明
+            file_path.write_text(content, encoding='utf-8')
+            return
+        
+        # 获取当前文件定义的所有类型
+        local_types = {name.split('.')[-1] for name in self.extract_nested_types(content)}
+        
+        # 匹配所有可能的字段定义模式
+        patterns = [
+            # repeated字段（确保字段名不被当作类型）
+            r'(repeated\s+)([\w.]+)(\s+[\w.]+\s*=\s*\d+[^;]*;)',
+            # optional字段
+            r'(optional\s+)([\w.]+)(\s+[\w.]+\s*=\s*\d+[^;]*;)',
+            # map字段的值类型
+            r'map<[\w.]+\s*,\s*([\w.]+)>(\s+[\w]+\s*=\s*\d+[^;]*;)',
+            # 返回类型
+            r'returns\s+\(?([\w.]+)\)?(\s*[{;])',
+            # 普通字段（放在最后，避免与其他模式冲突）
+            r'(?<![a-zA-Z0-9_.])([\w.]+)(\s+[\w.]+\s*=\s*\d+[^;]*;)',
+        ]
+        
+        modified_content = content
+        for pattern in patterns:
+            modified_content = re.sub(
+                pattern,
+                lambda m: self.process_type_reference(m, type_mapping, package_name, local_types, imported_packages),
+                modified_content
+            )
+        
+        # 只有在内容有改变时才写回文件
+        if modified_content != content:
+            file_path.write_text(modified_content, encoding='utf-8')
+            logging.info(f"文件 {file_path.name} 已更新")
+        else:
+            logging.info(f"文件 {file_path.name} 无需更新")
+
+    def process_all_files(self):
+        """处理所有proto文件"""
+        # 设置临时目录
+        self.setup_temp_dir()
+        
+        # 首先构建类型映射
+        logging.info("开始构建类型映射...")
+        type_mapping = self.build_type_mapping()
+        logging.info(f"类型映射构建完成，共找到 {len(type_mapping)} 个类型定义")
+        
+        # 处理所有proto文件
+        for proto_file in self.temp_dir.glob("*.proto"):
+            if proto_file.is_file():
+                self.process_proto_file(proto_file, type_mapping)
+        
+        logging.info(f"所有文件处理完成，结果保存在 {self.temp_dir} 目录中")
+
+def main():
+    processor = ProtoProcessor()
+    processor.process_all_files()
+
+if __name__ == '__main__':
+    main()
+
+# python3 package.py
+```
+
+在rust项目里调用
+`build.rs`
+```
+use std::{
+    fs,
+    path::{PathBuf},
+    process::Command,
+};
+
+/// 生成 protobuf 代码
+/// 
+/// # 参数
+/// * `proto_root` - proto 文件的根目录路径
+/// * `out_dir` - 生成的 Rust 代码输出目录
+/// * `excluded` - 要排除的 proto 文件列表
+fn generate_proto(
+    proto_root: &str,
+    out_dir: &str,
+    excluded: &[&str],
+) -> Result<(), Box<dyn std::error::Error>> {
+    let proto_root = PathBuf::from(proto_root);
+    let out_dir = PathBuf::from(out_dir);
+    
+    // 1. 清理并重新创建输出目录
+    if out_dir.exists() {
+        fs::remove_dir_all(&out_dir)?;
+    }
+    fs::create_dir_all(&out_dir)?;
+
+    // 2. 调用 Python 脚本处理 proto 文件
+    let script_path = proto_root.join("proto_package.py");
+    let status = Command::new("python3")
+        .arg(&script_path)
+        .status()
+        .unwrap_or_else(|e| panic!("❌ Python 脚本运行失败: {:?}, path: {:?}", e, script_path));
+
+    if !status.success() {
+        panic!("❌ Python 脚本运行错误，退出码: {}", status.code().unwrap_or(-1));
+    }
+
+    // 3. 收集所有 proto 文件
+    let temp_proto_dir = proto_root.join("temp_protos");
+    let proto_files: Vec<_> = fs::read_dir(&temp_proto_dir)?
+        .filter_map(|entry| entry.ok())
+        .map(|entry| entry.path())
+        .filter(|path| path.extension().map_or(false, |ext| ext == "proto"))
+        .collect();
+
+    // 4. 使用 prost 编译所有 proto 文件
+    let mut config = prost_build::Config::new();
+    config.out_dir(&out_dir);
+    config.compile_protos(&proto_files, &[temp_proto_dir])?;
+
+    // 5. 删除不需要的 .rs 文件
+    for excluded_file in excluded {
+        let rs_file = out_dir.join(excluded_file.replace(".proto", ".rs"));
+        if rs_file.exists() {
+            println!("删除排除的文件: {}", rs_file.display());
+            fs::remove_file(rs_file)?;
+        }
+    }
+
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // 要排除的 proto 文件名列表（不带路径，全部小写）
+    let excluded = vec![
+        "aa.proto",
+        "bb.proto",
+    ];
+
+    // 生成 protobuf 代码
+    generate_proto("../protos", "./src/generated", &excluded)?;
+
+    // 告诉 Cargo 在 proto 文件改变时重新运行
+    println!("cargo:rerun-if-changed=../protos");
+    println!("cargo:rerun-if-changed=../protos/*.proto");
+    println!("cargo:rerun-if-changed=build.rs");
+
+    Ok(())
+}
+
+```
+
+`Cargo.toml`里的配置
+```
+[package]
+name = "greeting"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+prost = "0.12"
+prost-types = "0.12"
+
+[build-dependencies]
+prost-build = "0.12"
+```
+
+要重新编译运行
+`cargo clean && cargo build`
