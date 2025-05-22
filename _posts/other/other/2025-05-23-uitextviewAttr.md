@@ -148,6 +148,7 @@ extension String {
                 sources.insert(src, at: 0) // 保持顺序
             }
             let originUrl = urlToMd5[originUrlMd5] ?? ""
+            // 缓存和下载功能，要在实际项目中使用sdwebimage或KingFisher这样的成熟框架，本demo只是为了不依赖任何库做的简化操作
             // 2. 替换整个 <img> 标签
             // 缓存查找图片是否存在
             // 拼接保存路径
