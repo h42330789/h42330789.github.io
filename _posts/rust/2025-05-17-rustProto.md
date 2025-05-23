@@ -553,7 +553,21 @@ use std::{
     fs,
     path::{PathBuf},
     process::Command,
+    env,
 };
+
+fn list_proto_files(dir: &PathBuf) -> Result<Vec<PathBuf>, Box<dyn std::error::Error>> {
+    let mut files = Vec::new();
+    if dir.exists() {
+        for entry in fs::read_dir(dir)? {
+            let path = entry?.path();
+            if path.extension().map(|ext| ext == "proto").unwrap_or(false) {
+                files.push(path);
+            }
+        }
+    }
+    Ok(files)
+}
 
 /// 生成 protobuf 代码
 /// 
@@ -566,66 +580,94 @@ fn generate_proto(
     out_dir: &str,
     excluded: &[&str],
 ) -> Result<(), Box<dyn std::error::Error>> {
-    let proto_root = PathBuf::from(proto_root);
-    let out_dir = PathBuf::from(out_dir);
+    println!("cargo:warning=开始生成 protobuf 代码");
+    
+    // 获取当前 cargo manifest 目录（项目根目录）
+    let manifest_dir = PathBuf::from(env::var("CARGO_MANIFEST_DIR")?);
+    
+    // 转换为绝对路径
+    let proto_root = manifest_dir.join(proto_root);
+    let out_dir = manifest_dir.join(out_dir);
+    let temp_proto_dir = proto_root.join("temp_protos");
+    
+    println!("cargo:warning=使用绝对路径:");
+    println!("cargo:warning=proto_root: {}", proto_root.display());
+    println!("cargo:warning=out_dir: {}", out_dir.display());
+    println!("cargo:warning=temp_dir: {}", temp_proto_dir.display());
     
     // 1. 清理并重新创建输出目录
     if out_dir.exists() {
+        println!("cargo:warning=清理输出目录: {}", out_dir.display());
         fs::remove_dir_all(&out_dir)?;
     }
     fs::create_dir_all(&out_dir)?;
 
-    // 2. 调用 Python 脚本处理 proto 文件
-    let script_path = proto_root.join("proto_package.py");
-    let status = Command::new("python3")
-        .arg(&script_path)
-        .status()
-        .unwrap_or_else(|e| panic!("❌ Python 脚本运行失败: {:?}, path: {:?}", e, script_path));
-
-    if !status.success() {
-        panic!("❌ Python 脚本运行错误，退出码: {}", status.code().unwrap_or(-1));
+    // 2. 确保临时目录是清理的状态
+    if temp_proto_dir.exists() {
+        println!("cargo:warning=清理临时目录: {}", temp_proto_dir.display());
+        fs::remove_dir_all(&temp_proto_dir)?;
     }
 
-    // 3. 收集所有 proto 文件
-    let temp_proto_dir = proto_root.join("temp_protos");
-    let proto_files: Vec<_> = fs::read_dir(&temp_proto_dir)?
-        .filter_map(|entry| entry.ok())
-        .map(|entry| entry.path())
-        .filter(|path| path.extension().map_or(false, |ext| ext == "proto"))
-        .collect();
+    // 3. 调用 Python 脚本处理 proto 文件
+    let script_path = proto_root.join("proto_package.py");
+    println!("cargo:warning=执行 Python 脚本: {}", script_path.display());
+    let output = Command::new("python3")
+        .arg(&script_path)
+        .output()?;
 
-    // 4. 使用 prost 编译所有 proto 文件
+    if !output.status.success() {
+        let error = String::from_utf8_lossy(&output.stderr);
+        println!("cargo:warning=Python 脚本运行错误: {}", error);
+        panic!("Python 脚本运行失败");
+    }
+
+    // 4. 收集处理后的 proto 文件
+    println!("cargo:warning=收集处理后的 proto 文件");
+    let proto_files = list_proto_files(&temp_proto_dir)?;
+    println!("cargo:warning=找到 {} 个处理后的 proto 文件", proto_files.len());
+    
+    // 5. 使用 prost 编译所有 proto 文件
+    println!("cargo:warning=开始编译 proto 文件");
     let mut config = prost_build::Config::new();
     config.out_dir(&out_dir);
-    config.compile_protos(&proto_files, &[temp_proto_dir])?;
+    config.compile_protos(&proto_files, &[temp_proto_dir.clone()])?;
 
-    // 5. 删除不需要的 .rs 文件
+    // 6. 删除不需要的 .rs 文件
     for excluded_file in excluded {
         let rs_file = out_dir.join(excluded_file.replace(".proto", ".rs"));
         if rs_file.exists() {
-            println!("删除排除的文件: {}", rs_file.display());
+            println!("cargo:warning=删除排除的文件: {}", rs_file.display());
             fs::remove_file(rs_file)?;
         }
     }
+
+    // 7. 清理临时目录
+    if temp_proto_dir.exists() {
+        println!("cargo:warning=最终清理临时目录: {}", temp_proto_dir.display());
+        fs::remove_dir_all(&temp_proto_dir)?;
+    }
+
+    println!("cargo:warning=Proto 生成完成");
+
+    // 明确告诉 Cargo 只在 build.rs 改变时重新运行
+    println!("cargo:rerun-if-changed=build.rs");
 
     Ok(())
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    println!("cargo:warning=构建脚本开始执行");
+    
     // 要排除的 proto 文件名列表（不带路径，全部小写）
     let excluded = vec![
         "aa.proto",
         "bb.proto",
     ];
 
-    // 生成 protobuf 代码
+    // 使用相对于 Cargo.toml 的路径
     generate_proto("../protos", "./src/generated", &excluded)?;
 
-    // 告诉 Cargo 在 proto 文件改变时重新运行
-    println!("cargo:rerun-if-changed=../protos");
-    println!("cargo:rerun-if-changed=../protos/*.proto");
-    println!("cargo:rerun-if-changed=build.rs");
-
+    println!("cargo:warning=构建脚本执行完成");
     Ok(())
 }
 
