@@ -244,3 +244,121 @@ extension String {
 }
 
 ```
+
+与sdwebimage结合的例子
+```
+import CommonCrypto
+import SDWebImage
+extension String {
+    func md5() -> String {
+        let data = Data(self.utf8)
+        var digest = [UInt8](repeating: 0, count: Int(CC_MD5_DIGEST_LENGTH))
+
+        data.withUnsafeBytes {
+            _ = CC_MD5($0.baseAddress, CC_LONG(data.count), &digest)
+        }
+
+        return digest.map { String(format: "%02x", $0) }.joined()
+    }
+    var htmlToAttr: NSAttributedString? {
+        guard let data = self.data(using: .unicode) else {
+           return nil
+       }
+       let options = [
+           NSAttributedString.DocumentReadingOptionKey.documentType: NSAttributedString.DocumentType.html
+       ]
+        return try? NSAttributedString(data: data, options: options, documentAttributes: nil)
+    }
+ var sdWebimageStorName: String {
+        let key = self.md5()
+        var ext = self.components(separatedBy: ".").last ?? "png"
+        if self.hasPrefix("data:image/") {
+            ext = "png"
+        }
+        let name = "\(key).\(ext)"
+        return name
+    }
+    var sdWebimageStorUrl: String {
+        let key = self.sdWebimageStorName
+        let path = SDImageCache.shared.cachePath(forKey: key)
+        return path ?? ""
+    }
+    
+    /// 富文本渲染，图片已经存在则以本地路径file://的方式处理，不存在则以占位图写入沙盒，然后下载图片
+    func htmlToAttrCustomImage(placeholder: UIImage? = nil, uniqueId: String? = nil, handler: ((String?) -> Void)? = nil) -> (NSAttributedString?, [String], [String: String]) {
+        let pattern = #"<\s*img\s+[^>]*src\s*=\s*['\"](.*?)['\"][^>]*?>"#
+        guard let regex = try? NSRegularExpression(pattern: pattern, options: [.caseInsensitive]) else {
+            return (nil, [], [:])
+        }
+        
+        let nsStr = self as NSString
+        let matches = regex.matches(in: self, options: [], range: NSRange(location: 0, length: nsStr.length))
+        
+        var urlToMd5: [String: String] = [:]
+        var processed = self
+        let placeholderImage = placeholder ?? UIImage()
+        
+        var sources: [String] = []
+        for match in matches.reversed() {
+            guard match.numberOfRanges >= 2 else { continue }
+            
+            // 1. 获取原始 src 值
+            let srcRange = match.range(at: 1)
+            var originUrlMd5 = ""
+            if let swiftSrcRange = Range(srcRange, in: processed) {
+                let src = String(processed[swiftSrcRange])
+                // sdwebimage真实的文件名为key.md5
+                originUrlMd5 = src.sdWebimageStorName.md5()
+                urlToMd5[originUrlMd5] = src
+                sources.insert(src, at: 0) // 保持顺序
+            }
+            let originUrl = urlToMd5[originUrlMd5] ?? ""
+            // 缓存和下载功能，要在实际项目中使用sdwebimage或KingFisher这样的成熟框架，本demo只是为了不依赖任何库做的简化操作
+            // 2. 替换整个 <img> 标签
+            // 缓存查找图片是否存在
+            // 拼接保存路径
+            var filePath = originUrl.sdWebimageStorUrl
+            
+            if SDImageCache.shared.diskCache.containsData(forKey: originUrl.sdWebimageStorName) == false {
+                // 如果是base64图片，直接转换为图片存储
+                if originUrl.hasPrefix("data:image/"),
+                    let dataStr = originUrl.components(separatedBy: "base64,").last,
+                   let data = Data(base64Encoded: dataStr, options: .ignoreUnknownCharacters) {
+                    SDImageCache.shared.storeImageData(data, forKey: originUrl.sdWebimageStorName)
+                } else {
+                    // 生成图片+下载图片
+                    filePath = SPPathKit.saveImageAndFIlePath(dir: "placeholders", fileName: "\(originUrlMd5).png",  image: placeholderImage)
+                    if originUrl.lowercased().starts(with: "http://") || originUrl.lowercased().starts(with: "https://") {
+                        // 网络图片才使用SDImageCache下载
+                        DispatchQueue.global().async {
+                            SDWebImageDownloader.shared.downloadImage(with: URL(string: originUrl)) { image, data, error, finished in
+                                if finished, let data = data {
+                                    // 保存下载的图片
+                                    SDImageCache.shared.storeImageData(toDisk: data, forKey: originUrl.sdWebimageStorName)
+                                    // 删除展位图
+                                    let placeholderPath = SPPathKit.createdirAndFilePath(dir: "placeholders", fileName: "\(originUrlMd5).png")
+                                    SPPathKit.remove(placeholderPath)
+                                    // 回调
+                                    handler?(uniqueId)
+                                }
+                            }
+                        }
+                    }
+                }
+                
+            }
+            if FileManager.default.fileExists(atPath: filePath) {
+                let replacement = "<img src=\"file://\(filePath)\">"
+                let fullRange = match.range
+                if let swiftFullRange = Range(fullRange, in: processed) {
+                    processed.replaceSubrange(swiftFullRange, with: replacement)
+                }
+            }
+        }
+        guard let attr = processed.htmlToAttr else {
+            return (nil, sources, urlToMd5)
+        }
+        return (attr, sources, urlToMd5)
+    }
+}
+```
