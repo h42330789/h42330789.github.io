@@ -561,12 +561,42 @@ fn list_proto_files(dir: &PathBuf) -> Result<Vec<PathBuf>, Box<dyn std::error::E
     if dir.exists() {
         for entry in fs::read_dir(dir)? {
             let path = entry?.path();
-            if path.extension().map(|ext| ext == "proto").unwrap_or(false) {
+            #[allow(clippy::unnecessary_map_or)]
+            if path.extension().map_or(false,|ext| ext == "proto") {
                 files.push(path);
             }
         }
     }
     Ok(files)
+}
+
+/// 生成 mod.rs 文件，导出目录中的所有 .rs 文件
+fn generate_mod_rs(out_dir: &PathBuf, excluded: &[&str]) -> Result<(), Box<dyn std::error::Error>> {
+    let mut mod_contents = String::new();
+    
+    // 读取目录中的所有 .rs 文件
+    for entry in fs::read_dir(out_dir)? {
+        let path = entry?.path();
+        #[allow(clippy::unnecessary_map_or)]
+        if path.extension().map_or(false, |ext| ext == "rs") {
+            // 获取文件名（不包含扩展名）
+            if let Some(file_stem) = path.file_stem() {
+                let file_name = file_stem.to_string_lossy();
+                // 检查是否在排除列表中
+                let proto_name = format!("{}.proto", file_name);
+                if !excluded.contains(&proto_name.as_str()) && file_name != "mod" {
+                    mod_contents.push_str(&format!("pub mod {};\n", file_name));
+                }
+            }
+        }
+    }
+    
+    // 写入 mod.rs 文件
+    let mod_path = out_dir.join("mod.rs");
+    fs::write(mod_path, mod_contents)?;
+    println!("cargo:warning=已生成 mod.rs 文件");
+    
+    Ok(())
 }
 
 /// 生成 protobuf 代码
@@ -641,10 +671,13 @@ fn generate_proto(
         }
     }
 
-    // 7. 清理临时目录
+    // 7. 生成 mod.rs 文件
+    generate_mod_rs(&out_dir, excluded)?;
+
+    // 8. 清理临时目录
     if temp_proto_dir.exists() {
         println!("cargo:warning=最终清理临时目录: {}", temp_proto_dir.display());
-        fs::remove_dir_all(&temp_proto_dir)?;
+        // fs::remove_dir_all(&temp_proto_dir)?;
     }
 
     println!("cargo:warning=Proto 生成完成");
@@ -670,6 +703,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("cargo:warning=构建脚本执行完成");
     Ok(())
 }
+
 
 ```
 
