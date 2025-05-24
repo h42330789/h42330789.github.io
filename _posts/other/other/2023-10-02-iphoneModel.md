@@ -369,23 +369,14 @@ class AppleDeviceParser:
             print(f"❌ 下载网页失败: {e}")
             return ""
 
-    def is_target_table(self, table: BeautifulSoup) -> bool:
-        """检查是否是目标表格（包含Generation和Identifier的表格）"""
-        if not table.find('tr'):
-            return False
-            
-        # 检查前几行是否包含关键词
-        first_rows = table.find_all('tr')[:3]  # 检查前3行
-        for row in first_rows:
-            cells = row.find_all(['td', 'th'])
-            row_text = ' '.join(self.get_cell_text(cell) for cell in cells).lower()
-            if 'generation' in row_text and 'identifier' in row_text:
-                print(f"✅ 找到目标表格，表头包含: {row_text}")
-                return True
-        return False
-
-    def find_target_tables(self, html_content: str) -> List[BeautifulSoup]:
-        """查找包含Generation和Identifier的表格"""
+    def find_target_tables(self, html_content: str) -> List[Tuple[BeautifulSoup, dict]]:
+        """查找包含Generation和Identifier的表格，并记录表格的关键信息
+        返回: [(table, table_info)]
+        table_info包含：
+        - total_columns: 总列数
+        - generation_index: Generation列的索引
+        - identifier_index: Identifier列的索引
+        """
         soup = BeautifulSoup(html_content, 'html.parser')
         all_tables = soup.find_all('table', {'class': 'wikitable'})
         target_tables = []
@@ -402,8 +393,16 @@ class AppleDeviceParser:
             
             # 检查是否包含必要的列
             if 'generation' in header_texts and 'identifier' in header_texts:
-                target_tables.append(table)
-                print(f"找到目标表格，表头: {header_texts}")
+                table_info = {
+                    'total_columns': len(header_cells),
+                    'generation_index': header_texts.index('generation'),
+                    'identifier_index': header_texts.index('identifier')
+                }
+                target_tables.append((table, table_info))
+                print(f"找到目标表格:")
+                print(f"  总列数: {table_info['total_columns']}")
+                print(f"  Generation列索引: {table_info['generation_index']}")
+                print(f"  Identifier列索引: {table_info['identifier_index']}")
                 
         print(f"共找到 {len(target_tables)} 个目标表格")
         return target_tables
@@ -418,76 +417,26 @@ class AppleDeviceParser:
             link.replace_with(link.get_text())
         return cell.get_text(strip=True)
 
-    def count_identifiers(self, text: str) -> int:
-        """计算文本中包含的设备标识符数量"""
-        device_pattern = re.compile(r'(iPhone|iPad|iPod|Watch|Mac|iMac|MacBook|MacBookPro|MacBookAir|Macmini)\d+,\d+')
-        return len(device_pattern.findall(text))
-
-    def find_header_row(self, rows: List[BeautifulSoup]) -> Tuple[Optional[int], Optional[int]]:
-        """查找表头行和标识符列的位置
-        返回: (表头行索引, 标识符列索引)
-        对于有4列或以上的行，标识符列固定为倒数第4列
-        """
-        for row_idx, row in enumerate(rows):
-            cells = row.find_all(['td', 'th'])
-            if len(cells) >= 4:
-                # 标识符列固定为倒数第4列
-                identifier_col_idx = len(cells) - 4
-                return row_idx, identifier_col_idx
-        return None, None
-
-    def is_generation_row(self, row_texts: List[str]) -> bool:
-        """判断是否是Generation行"""
-        if not row_texts:
-            return False
-            
-        first_cell = row_texts[0]
-        
-        # 检查是否包含设备名称和年份/代数信息
-        device_patterns = [
-            r'(iPhone|iPad|iPod|Watch|Mac|iMac|MacBook|Mac Pro|Mac mini|Mac Studio)',
-            r'(\d{4})',  # 年份
-            r'(Early|Mid|Late)',  # 发布时间
-            r'(M[1-9])',  # M1, M2等芯片
-            r'(\d{1,2}(?:st|nd|rd|th) generation)',  # nth generation
-            r'(Series \d+)'  # Apple Watch Series
-        ]
-        
-        # 检查是否包含设备名称和其他标识信息
-        has_device_name = any(re.search(pattern, first_cell, re.IGNORECASE) for pattern in device_patterns)
-        has_identifier = bool(re.search(r'[A-Z]\d{4}', first_cell))  # 型号标识符，如A2337
-        
-        return has_device_name or has_identifier
-
-    def process_table(self, table: BeautifulSoup) -> None:
+    def process_table(self, table_info: Tuple[BeautifulSoup, dict]) -> None:
         """处理单个表格"""
+        table, info = table_info
         rows = table.find_all('tr')
         if not rows:
             return
             
-        # 2.1 处理标题行
-        header_row = rows[0]
-        header_cells = header_row.find_all(['td', 'th'])
-        header_texts = [self.get_cell_text(cell).lower() for cell in header_cells]
+        total_columns = info['total_columns']
+        generation_index = info['generation_index']
+        identifier_index = info['identifier_index']
         
-        # 记录总列数和关键列的索引
-        total_cell_count = len(header_cells)
-        generation_index = header_texts.index('generation') if 'generation' in header_texts else -1
-        identifier_index = header_texts.index('identifier') if 'identifier' in header_texts else -1
-        
-        print(f"\n表格信息:")
-        print(f"总列数: {total_cell_count}")
+        print(f"\n处理表格:")
+        print(f"总列数: {total_columns}")
         print(f"Generation列索引: {generation_index}")
         print(f"Identifier列索引: {identifier_index}")
         
-        if generation_index == -1 or identifier_index == -1:
-            print("❌ 未找到必要的列")
-            return
-            
         # 记录当前的Generation
         current_generation = None
         
-        # 2.2-2.4 处理数据行
+        # 处理数据行
         for row_idx, row in enumerate(rows[1:], 1):  # 从第1行开始
             cells = row.find_all(['td', 'th'])
             row_texts = [self.get_cell_text(cell) for cell in cells]
@@ -496,15 +445,15 @@ class AppleDeviceParser:
             print(f"列数: {len(cells)}")
             print(f"内容: {row_texts}")
             
-            # 2.2 检查是否是完整行，记录Generation
-            if len(cells) == total_cell_count:
+            # 检查是否是完整行，记录Generation
+            if len(cells) == total_columns:
                 current_generation = row_texts[generation_index]
                 print(f"更新Generation: {current_generation}")
             
-            # 2.3 检查是否包含Identifier（包括完整行）
-            if len(cells) >= (total_cell_count - identifier_index):
-                # 2.4 提取Identifier
-                identifier_cell_index = len(cells) - (total_cell_count - identifier_index)
+            # 检查是否包含Identifier（包括完整行）
+            if len(cells) >= (total_columns - identifier_index):
+                # 提取Identifier
+                identifier_cell_index = len(cells) - (total_columns - identifier_index)
                 if identifier_cell_index >= 0 and current_generation:
                     identifier_text = row_texts[identifier_cell_index]
                     print(f"检查Identifier文本: {identifier_text}")
@@ -519,14 +468,11 @@ class AppleDeviceParser:
                         self.device_list.append({device_id: current_generation})
                         print(f"✅ 添加设备: {device_id} -> {current_generation}")
 
-    def extract_device_data(self, tables: List[BeautifulSoup]) -> None:
+    def extract_device_data(self, tables: List[Tuple[BeautifulSoup, dict]]) -> None:
         """步骤3：从表格中提取设备标识符和代数信息"""
-        for table_idx, table in enumerate(tables):
-            print(f"\n{'='*80}")
-            print(f"处理第 {table_idx + 1} 个表格:")
-            print('='*80)
-            self.process_table(table)
-
+        for table_info in tables:
+            self.process_table(table_info)
+        
         print(f"\n✅ 提取了 {len(self.device_list)} 条设备数据")
         
         # 打印所有提取的数据
@@ -534,7 +480,7 @@ class AppleDeviceParser:
         for device_dict in self.device_list:
             for device_id, generation in device_dict.items():
                 print(f"标识符: {device_id:<15} -> 代数: {generation}")
-            
+
     def generate_swift_code(self) -> str:
         """生成Swift代码，使用device_list保持顺序"""
         if not self.device_list:
