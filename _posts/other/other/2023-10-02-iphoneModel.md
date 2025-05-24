@@ -14,6 +14,9 @@ tags: [mac]     # TAG names should always be lowercase
 - [获取手机系统型号 https://www.theiphonewiki.com/wiki/Models](https://www.theiphonewiki.com/wiki/Models)
 - [获取最新型号查询地址 https://everymac.com](https://everymac.com)
 
+- https://www.theiphonewiki.com/wiki/Models
+- https://theapplewiki.com/wiki/Models
+
 > ### 前言
 > 每次项目里需要查找iPhone型号时到处找代码，但是适配的型号都不是最新的，于是把找到更新最勤的几个网站数据同步下来，同时将网站加入到文档中，下次有更新时第一时间去把网站数据更新下来
 
@@ -32,7 +35,8 @@ import UIKit
 
 // https://blog.csdn.net/GSSGoodLuck/article/details/122085870
 //获取手机系统型号
-//https://www.theiphonewiki.com/wiki/Models
+// https://www.theiphonewiki.com/wiki/Models
+// https://theapplewiki.com/wiki/Models
 // 获取最新型号查询地址
 // https://everymac.com/ultimate-mac-lookup/?search_keywords=iPhone16%2C2
 
@@ -50,6 +54,7 @@ public extension UIDevice {
         switch identifier {
         // iPod
         // https://everymac.com/systems/apple/ipod/index-ipod-specs.html
+        // https://theapplewiki.com/wiki/Models
         case "iPod1,1": return "iPod Touch 1"
         case "iPod2,1": return "iPod Touch 2"
         case "iPod3,1": return "iPod Touch 3"
@@ -60,6 +65,7 @@ public extension UIDevice {
             
         // iPhone
         // https://everymac.com/systems/apple/iphone/index-iphone-specs.html
+        // https://theapplewiki.com/wiki/Models
         case "iPhone1,1": return "iPhone"
         case "iPhone1,2": return "iPhone 3G"
         case "iPhone2,1": return "iPhone 3GS"
@@ -307,4 +313,339 @@ Objective-C参考代码
 
     return deviceModel;
 }
+```
+
+----
+增加从`https://theapplewiki.com/wiki/Models`自动抓取生成model的脚本
+
+`apple_device_parser.py`
+```
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+"""
+从 https://theapplewiki.com/wiki/Models 网站抓取 Apple 设备型号信息并生成 Swift 代码。
+生成的代码包含设备标识符到设备代数的映射关系。
+
+依赖安装:
+pip3 install requests beautifulsoup4
+
+执行示例:
+python3 apple_device_parser.py Device+Models.swift
+"""
+
+import requests
+from bs4 import BeautifulSoup
+from typing import List, Tuple, Dict, Set, Optional
+import time
+import random
+import os
+import re
+import argparse
+
+class AppleDeviceParser:
+    """用于解析Apple设备型号信息的类"""
+    
+    def __init__(self):
+        self.url = "https://theapplewiki.com/wiki/Models"
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8',
+            'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+            'Referer': 'https://theapplewiki.com/',
+        }
+        # 使用数组保存解析结果，每个元素是一个字典 {identifier: generation}
+        self.device_list = []
+
+    def download_webpage(self) -> str:
+        """步骤1：下载网页内容"""
+        try:
+            time.sleep(random.uniform(1, 3))  # 添加随机延迟
+            response = requests.get(self.url, headers=self.headers)
+            response.raise_for_status()
+            print("✅ 成功下载网页内容")
+            return response.text
+        except requests.RequestException as e:
+            print(f"❌ 下载网页失败: {e}")
+            return ""
+
+    def is_target_table(self, table: BeautifulSoup) -> bool:
+        """检查是否是目标表格（包含Generation和Identifier的表格）"""
+        if not table.find('tr'):
+            return False
+            
+        # 检查前几行是否包含关键词
+        first_rows = table.find_all('tr')[:3]  # 检查前3行
+        for row in first_rows:
+            cells = row.find_all(['td', 'th'])
+            row_text = ' '.join(self.get_cell_text(cell) for cell in cells).lower()
+            if 'generation' in row_text and 'identifier' in row_text:
+                print(f"✅ 找到目标表格，表头包含: {row_text}")
+                return True
+        return False
+
+    def find_target_tables(self, html_content: str) -> List[BeautifulSoup]:
+        """查找包含Generation和Identifier的表格"""
+        soup = BeautifulSoup(html_content, 'html.parser')
+        all_tables = soup.find_all('table', {'class': 'wikitable'})
+        target_tables = []
+        
+        for table in all_tables:
+            # 获取第一行（标题行）
+            header_row = table.find('tr')
+            if not header_row:
+                continue
+                
+            # 获取标题行的所有单元格文本
+            header_cells = header_row.find_all(['td', 'th'])
+            header_texts = [self.get_cell_text(cell).lower() for cell in header_cells]
+            
+            # 检查是否包含必要的列
+            if 'generation' in header_texts and 'identifier' in header_texts:
+                target_tables.append(table)
+                print(f"找到目标表格，表头: {header_texts}")
+                
+        print(f"共找到 {len(target_tables)} 个目标表格")
+        return target_tables
+
+    def get_cell_text(self, cell: BeautifulSoup) -> str:
+        """获取单元格的文本内容，去除引用标记和其他无关内容"""
+        # 移除所有引用标记
+        for ref in cell.find_all('sup', {'class': 'reference'}):
+            ref.decompose()
+        # 移除所有链接的样式，只保留文本
+        for link in cell.find_all('a'):
+            link.replace_with(link.get_text())
+        return cell.get_text(strip=True)
+
+    def count_identifiers(self, text: str) -> int:
+        """计算文本中包含的设备标识符数量"""
+        device_pattern = re.compile(r'(iPhone|iPad|iPod|Watch|Mac|iMac|MacBook|MacBookPro|MacBookAir|Macmini)\d+,\d+')
+        return len(device_pattern.findall(text))
+
+    def find_header_row(self, rows: List[BeautifulSoup]) -> Tuple[Optional[int], Optional[int]]:
+        """查找表头行和标识符列的位置
+        返回: (表头行索引, 标识符列索引)
+        对于有4列或以上的行，标识符列固定为倒数第4列
+        """
+        for row_idx, row in enumerate(rows):
+            cells = row.find_all(['td', 'th'])
+            if len(cells) >= 4:
+                # 标识符列固定为倒数第4列
+                identifier_col_idx = len(cells) - 4
+                return row_idx, identifier_col_idx
+        return None, None
+
+    def is_generation_row(self, row_texts: List[str]) -> bool:
+        """判断是否是Generation行"""
+        if not row_texts:
+            return False
+            
+        first_cell = row_texts[0]
+        
+        # 检查是否包含设备名称和年份/代数信息
+        device_patterns = [
+            r'(iPhone|iPad|iPod|Watch|Mac|iMac|MacBook|Mac Pro|Mac mini|Mac Studio)',
+            r'(\d{4})',  # 年份
+            r'(Early|Mid|Late)',  # 发布时间
+            r'(M[1-9])',  # M1, M2等芯片
+            r'(\d{1,2}(?:st|nd|rd|th) generation)',  # nth generation
+            r'(Series \d+)'  # Apple Watch Series
+        ]
+        
+        # 检查是否包含设备名称和其他标识信息
+        has_device_name = any(re.search(pattern, first_cell, re.IGNORECASE) for pattern in device_patterns)
+        has_identifier = bool(re.search(r'[A-Z]\d{4}', first_cell))  # 型号标识符，如A2337
+        
+        return has_device_name or has_identifier
+
+    def process_table(self, table: BeautifulSoup) -> None:
+        """处理单个表格"""
+        rows = table.find_all('tr')
+        if not rows:
+            return
+            
+        # 2.1 处理标题行
+        header_row = rows[0]
+        header_cells = header_row.find_all(['td', 'th'])
+        header_texts = [self.get_cell_text(cell).lower() for cell in header_cells]
+        
+        # 记录总列数和关键列的索引
+        total_cell_count = len(header_cells)
+        generation_index = header_texts.index('generation') if 'generation' in header_texts else -1
+        identifier_index = header_texts.index('identifier') if 'identifier' in header_texts else -1
+        
+        print(f"\n表格信息:")
+        print(f"总列数: {total_cell_count}")
+        print(f"Generation列索引: {generation_index}")
+        print(f"Identifier列索引: {identifier_index}")
+        
+        if generation_index == -1 or identifier_index == -1:
+            print("❌ 未找到必要的列")
+            return
+            
+        # 记录当前的Generation
+        current_generation = None
+        
+        # 2.2-2.4 处理数据行
+        for row_idx, row in enumerate(rows[1:], 1):  # 从第1行开始
+            cells = row.find_all(['td', 'th'])
+            row_texts = [self.get_cell_text(cell) for cell in cells]
+            
+            print(f"\n处理第 {row_idx} 行:")
+            print(f"列数: {len(cells)}")
+            print(f"内容: {row_texts}")
+            
+            # 2.2 检查是否是完整行，记录Generation
+            if len(cells) == total_cell_count:
+                current_generation = row_texts[generation_index]
+                print(f"更新Generation: {current_generation}")
+            
+            # 2.3 检查是否包含Identifier（包括完整行）
+            if len(cells) >= (total_cell_count - identifier_index):
+                # 2.4 提取Identifier
+                identifier_cell_index = len(cells) - (total_cell_count - identifier_index)
+                if identifier_cell_index >= 0 and current_generation:
+                    identifier_text = row_texts[identifier_cell_index]
+                    print(f"检查Identifier文本: {identifier_text}")
+                    
+                    # 提取设备标识符
+                    device_pattern = re.compile(r'(iPhone|iPad|iPod|Watch|Mac|iMac|MacBook|MacBookPro|MacBookAir|Macmini)\d+,\d+')
+                    matches = device_pattern.finditer(identifier_text)
+                    
+                    for match in matches:
+                        device_id = match.group()
+                        # 将每个identifier-generation对作为独立的字典添加到列表中
+                        self.device_list.append({device_id: current_generation})
+                        print(f"✅ 添加设备: {device_id} -> {current_generation}")
+
+    def extract_device_data(self, tables: List[BeautifulSoup]) -> None:
+        """步骤3：从表格中提取设备标识符和代数信息"""
+        for table_idx, table in enumerate(tables):
+            print(f"\n{'='*80}")
+            print(f"处理第 {table_idx + 1} 个表格:")
+            print('='*80)
+            self.process_table(table)
+
+        print(f"\n✅ 提取了 {len(self.device_list)} 条设备数据")
+        
+        # 打印所有提取的数据
+        print("\n提取的所有数据:")
+        for device_dict in self.device_list:
+            for device_id, generation in device_dict.items():
+                print(f"标识符: {device_id:<15} -> 代数: {generation}")
+            
+    def generate_swift_code(self) -> str:
+        """生成Swift代码，使用device_list保持顺序"""
+        if not self.device_list:
+            return "// 没有找到设备数据"
+            
+        # Swift文件头部
+        code_lines = [
+            "//",
+            "// DeviceModels.swift",
+            "// 自动生成的设备型号映射代码",
+            "// 数据来源: https://theapplewiki.com/wiki/Models",
+            "//",
+            "",
+            "import UIKit",
+            "",
+            "public extension UIDevice {",
+            "    ",
+            "    static var modelName: String {",
+            "        var systemInfo = utsname()",
+            "        uname(&systemInfo)",
+            "        let machineMirror = Mirror(reflecting: systemInfo.machine)",
+            "        let identifier = machineMirror.children.reduce(\"\") { identifier, element in",
+            "            guard let value = element.value as? Int8, value != 0 else { return identifier }",
+            "            return identifier + String(UnicodeScalar(UInt8(value)))",
+            "        }",
+            "        ",
+            "        switch identifier {",
+        ]
+        
+        # 按设备类型分组但保持原始顺序
+        current_type = None
+        for device_dict in self.device_list:
+            for device_id, generation in device_dict.items():
+                # 获取设备类型
+                device_type = device_id.split(',')[0].rstrip('0123456789')
+                
+                # 如果是新的设备类型，添加注释
+                if device_type != current_type:
+                    current_type = device_type
+                    code_lines.append(f"\n            // {device_type} 设备")
+                
+                code_lines.append(f'            case "{device_id}":')
+                code_lines.append(f'                return "{generation}"')
+        
+        code_lines.extend([
+            "",
+            "            // 模拟器的名称默认就是型号的名称",
+            '            case "i386", "x86_64":',
+            '                return "\\(UIDevice.current.name) Simulator"',
+            "            default:",
+            "                return identifier",
+            "        }",
+            "    }",
+            "}",
+        ])
+        
+        return '\n'.join(code_lines)
+    
+    def save_swift_file(self, swift_code: str, output_path: str) -> None:
+        """步骤5：保存Swift代码到文件"""
+        try:
+            # 获取当前脚本所在目录
+            script_dir = os.path.dirname(os.path.abspath(__file__))
+            # 在脚本目录下创建输出文件
+            output_path = os.path.join(script_dir, output_path)
+            
+            # 写入文件
+            with open(output_path, 'w', encoding='utf-8') as f:
+                f.write(swift_code)
+            print(f"✅ Swift代码已保存到: {output_path}")
+        except Exception as e:
+            print(f"❌ 保存文件失败: {e}")
+
+def main():
+    # 设置命令行参数
+    parser = argparse.ArgumentParser(description='从theapplewiki.com抓取Apple设备型号信息并生成Swift代码')
+    parser.add_argument('output_path', help='生成的Swift文件路径')
+    args = parser.parse_args()
+    
+    parser = AppleDeviceParser()
+    
+    # 步骤1：下载网页
+    html_content = parser.download_webpage()
+    if not html_content:
+        print("程序终止：无法获取网页内容")
+        return
+        
+    # 步骤2：查找目标表格
+    target_tables = parser.find_target_tables(html_content)
+    if not target_tables:
+        print("程序终止：未找到包含所需信息的表格")
+        return
+        
+    # 步骤3：提取数据
+    parser.extract_device_data(target_tables)
+    if not parser.device_list:
+        print("程序终止：未能提取到设备数据")
+        return
+        
+    # 步骤4：生成Swift代码
+    swift_code = parser.generate_swift_code()
+    
+    # 步骤5：保存到文件
+    parser.save_swift_file(swift_code, args.output_path)
+
+if __name__ == "__main__":
+    main() 
+
+# 初次执行，需要安装依赖
+# pip3 install requests
+# pip3 install beautifulsoup4
+# 每次直接命令行执行
+# python3 apple_device_parser.py Device+Models.swift
 ```

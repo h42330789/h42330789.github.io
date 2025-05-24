@@ -18,3 +18,5 @@ title: 友链
 - [英语-voicetube](https://tw.voicetube.com/)
 - [英语语法](https://test-english.com/grammar-points/a1/)
 - [英语资源](https://ilacrenee.edublogs.org/links/)
+- [xyccstudio](https://blog.csdn.net/xo19882011?type=blog)
+- [xyccstudio](https://xyccstudio.cn/blogs/xblog/)
